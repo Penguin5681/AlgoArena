@@ -1,0 +1,214 @@
+.pageBackground {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 100%;
+    min-height: 600px;
+}
+
+.column h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    margin: 20px 0 0 0;
+    text-align: center;
+}
+
+.column h3 {
+    font-size: 16px;
+    font-weight: 400;
+    color: #666;
+    margin: 10px 0 30px 0;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.emptySpace {
+    height: 20px;
+}
+
+.inputWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.formField {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.message {
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.messageSuccess {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.messageError {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.messageInfo {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.signInTextWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.signInText {
+    color: #667eea;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.signInText:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.bottomContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #999;
+}
+
+.bottomText {
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.bottomText:hover {
+    color: #667eea;
+}
+
+/* Button container for login page */
+.buttonContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .pageBackground {
+        padding: 10px;
+    }
+    
+    .column {
+        padding: 30px 20px;
+        border-radius: 15px;
+        min-height: 500px;
+    }
+    
+    .column h2 {
+        font-size: 24px;
+    }
+    
+    .column h3 {
+        font-size: 14px;
+    }
+    
+    .inputWrapper {
+        gap: 16px;
+    }
+}
+
+/* Loading state styles */
+.loadingContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    font-size: 16px;
+    color: #666;
+}
+
+/* Success message animation */
+.messageSuccess {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus states for better accessibility */
+.formField input:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Error state for form fields */
+.formField.error input {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Disabled button states */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Hover effects for interactive elements */
+.signInTextWrapper span:not(.signInText) {
+    transition: color 0.3s ease;
+}
+
+/* Better spacing for error messages */
+.message + .message {
+    margin-top: 4px;
+}

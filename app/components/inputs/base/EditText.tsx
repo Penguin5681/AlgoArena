@@ -9,6 +9,7 @@ interface EditTextProps {
 	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	type?: 'text' | 'password';
 	name?: string;
+	onBlur?: () => void;
 }
 
 const EditText: React.FC<EditTextProps> = ({
@@ -17,6 +18,7 @@ const EditText: React.FC<EditTextProps> = ({
 	value,
 	onChange,
 	type = 'text',
+	onBlur,
 	name,
 }) => {
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -41,6 +43,7 @@ const EditText: React.FC<EditTextProps> = ({
 					value={value}
 					onChange={onChange}
 					name={name}
+					onBlur={onBlur}
 					className={styles.inputField}
 				/>
 				{type === 'password' && (

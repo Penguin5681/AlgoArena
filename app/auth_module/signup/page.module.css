@@ -20,7 +20,7 @@
 }
 
 .inputWrapper {
-    margin-top: 50px;
+    margin-top: 30px;
     width: 300px;
 }
 
@@ -39,5 +39,50 @@
 .bottomText:hover {
     text-decoration: underline;
     cursor: pointer;
+}
+
+.signInTextWrapper {
+    margin-top: 20px;
+}
+
+.signInText {
+    color: #78dce3;
+    font-weight: bolder;
+}
+
+.signInText:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.formField {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.message {
+    margin-top: 4px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.messageSuccess {
+    background-color: rgba(0, 200, 83, 0.1);
+    color: #00c853;
+    border: 1px solid rgba(0, 200, 83, 0.2);
+}
+
+.messageError {
+    background-color: rgba(255, 82, 82, 0.1);
+    color: #ff5252;
+    border: 1px solid rgba(255, 82, 82, 0.2);
+}
+
+.messageInfo {
+    background-color: rgba(41, 121, 255, 0.1);
+    color: #2979ff;
+    border: 1px solid rgba(41, 121, 255, 0.2);
 }
 
