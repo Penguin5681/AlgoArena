@@ -161,131 +161,185 @@ export default function SignUpPage() {
 
     return (
         <div className={styles.pageBackground}>
-            <div className={styles.column}>
-                <Image
-                    src={'/app-logo.png'}
-                    alt={"Logo"}
-                    width={90}
-                    height={90}
-                />
-                <h2>Welcome to Algo arena</h2>
-                <div className={styles.emptySpace}/>
-                <h3>Practice. Compete. Grow with your squad.</h3>
-
-                <div className={styles.inputWrapper}>
-                    <div className={styles.formField}>
-                        <EditText
-                            value={username}
-                            placeholder={"Enter your Username"}
-                            type={'text'}
-                            onChange={(event) => {
-                                setUsername(event.target.value)
-                                // Clear username status when user types
-                                if (usernameStatus.message) {
-                                    setUsernameStatus({message: '', isChecking: false});
-                                }
-                            }}
-                            onBlur={handleUsernameBlur}
-                        />
-                        {usernameStatus.message && (
-                            <div className={`${styles.message} ${
-                                usernameStatus.isValid
-                                    ? styles.messageSuccess
-                                    : usernameStatus.isValid === false
-                                        ? styles.messageError
-                                        : styles.messageInfo
-                            }`}>
-                                {usernameStatus.message}
-                            </div>
-                        )}
-                        {formErrors?.username && (
-                            <div className={`${styles.message} ${styles.messageError}`}>
-                                {formErrors.username}
-                            </div>
-                        )}
+            <div className={styles.splitContainer}>
+                <div className={styles.infoColumn}>
+                    <h1 className={styles.infoHeading}>Join Algo Arena Today</h1>
+                    <p className={styles.infoSubheading}>
+                        Level up your coding skills with competitive programming and algorithmic challenges
+                    </p>
+                    
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L19 9V21H5V9L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </div>
+                        <div className={styles.featureText}>
+                            <h3 className={styles.featureTitle}>Practice Together</h3>
+                            <p className={styles.featureDescription}>Solve challenges with friends and track each other's progress</p>
+                        </div>
                     </div>
-
-                    <div className={styles.formField}>
-                        <EditText
-                            value={email}
-                            placeholder={"Enter your Email"}
-                            type={'text'}
-                            onChange={(event) => {
-                                setEmail(event.target.value)
-                                // Clear email status when user types
-                                if (emailStatus.message) {
-                                    setEmailStatus({message: '', isChecking: false});
-                                }
-                            }}
-                            onBlur={handleEmailBlur}
-                        />
-                        {emailStatus.message && (
-                            <div className={`${styles.message} ${
-                                emailStatus.isValid
-                                    ? styles.messageSuccess
-                                    : emailStatus.isValid === false
-                                        ? styles.messageError
-                                        : styles.messageInfo
-                            }`}>
-                                {emailStatus.message}
-                            </div>
-                        )}
-                        {formErrors?.email && (
-                            <div className={`${styles.message} ${styles.messageError}`}>
-                                {formErrors.email}
-                            </div>
-                        )}
+                    
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 21V19C17 16.7909 15.2091 15 13 15H5C2.79086 15 1 16.7909 1 19V21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M23 21V19C22.9986 17.1771 21.765 15.5857 20 15.13" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M16 3.13C17.7699 3.58317 19.0078 5.17799 19.0078 7.005C19.0078 8.83201 17.7699 10.4268 16 10.88" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </div>
+                        <div className={styles.featureText}>
+                            <h3 className={styles.featureTitle}>Compete in Teams</h3>
+                            <p className={styles.featureDescription}>Join or create squads and participate in team competitions</p>
+                        </div>
                     </div>
-
-                    <div className={styles.formField}>
-                        <EditText
-                            value={password}
-                            placeholder={"Enter your Password"}
-                            type={'password'}
-                            onChange={(event) => {
-                                setPassword(event.target.value)
-                            }}
-                        />
-                        {formErrors?.password && (
-                            <div className={`${styles.message} ${styles.messageError}`}>
-                                {formErrors.password}
-                            </div>
-                        )}
+                    
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 15C15.866 15 19 11.866 19 8C19 4.13401 15.866 1 12 1C8.13401 1 5 4.13401 5 8C5 11.866 8.13401 15 12 15Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M8.21 13.89L7 23L12 20L17 23L15.79 13.88" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </div>
+                        <div className={styles.featureText}>
+                            <h3 className={styles.featureTitle}>Earn Achievements</h3>
+                            <p className={styles.featureDescription}>Get recognized for your skills with badges and rewards</p>
+                        </div>
                     </div>
                 </div>
+                
+                <div className={styles.formColumn}>
+                    <div className={styles.column}>
+                        <div className={styles.logoContainer}>
+                            <Image
+                                src={'/app-logo.png'}
+                                alt={"Logo"}
+                                width={90}
+                                height={90}
+                                className={styles.logo}
+                            />
+                        </div>
+                        <h2>Create Account</h2>
+                        <div className={styles.emptySpace}/>
+                        <h3>Join the coding community</h3>
 
-                {formErrors?.general && (
-                    <div className={`${styles.message} ${styles.messageError}`}>
-                        {formErrors.general}
+                        <div className={styles.inputWrapper}>
+                            <div className={styles.formField}>
+                                <EditText
+                                    value={username}
+                                    placeholder={"Enter your Username"}
+                                    type={'text'}
+                                    onChange={(event) => {
+                                        setUsername(event.target.value)
+                                        // Clear username status when user types
+                                        if (usernameStatus.message) {
+                                            setUsernameStatus({message: '', isChecking: false});
+                                        }
+                                    }}
+                                    onBlur={handleUsernameBlur}
+                                />
+                                {usernameStatus.message && (
+                                    <div className={`${styles.message} ${
+                                        usernameStatus.isValid
+                                            ? styles.messageSuccess
+                                            : usernameStatus.isValid === false
+                                                ? styles.messageError
+                                                : styles.messageInfo
+                                    }`}>
+                                        {usernameStatus.message}
+                                    </div>
+                                )}
+                                {formErrors?.username && (
+                                    <div className={`${styles.message} ${styles.messageError}`}>
+                                        {formErrors.username}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.formField}>
+                                <EditText
+                                    value={email}
+                                    placeholder={"Enter your Email"}
+                                    type={'text'}
+                                    onChange={(event) => {
+                                        setEmail(event.target.value)
+                                        // Clear email status when user types
+                                        if (emailStatus.message) {
+                                            setEmailStatus({message: '', isChecking: false});
+                                        }
+                                    }}
+                                    onBlur={handleEmailBlur}
+                                />
+                                {emailStatus.message && (
+                                    <div className={`${styles.message} ${
+                                        emailStatus.isValid
+                                            ? styles.messageSuccess
+                                            : emailStatus.isValid === false
+                                                ? styles.messageError
+                                                : styles.messageInfo
+                                    }`}>
+                                        {emailStatus.message}
+                                    </div>
+                                )}
+                                {formErrors?.email && (
+                                    <div className={`${styles.message} ${styles.messageError}`}>
+                                        {formErrors.email}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.formField}>
+                                <EditText
+                                    value={password}
+                                    placeholder={"Enter your Password"}
+                                    type={'password'}
+                                    onChange={(event) => {
+                                        setPassword(event.target.value)
+                                    }}
+                                />
+                                {formErrors?.password && (
+                                    <div className={`${styles.message} ${styles.messageError}`}>
+                                        {formErrors.password}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {formErrors?.general && (
+                            <div className={`${styles.message} ${styles.messageError}`}>
+                                {formErrors.general}
+                            </div>
+                        )}
+
+                        <GradientButton 
+                            onClick={handleSignUp}
+                            disabled={isSigningUp || usernameStatus.isChecking || emailStatus.isChecking}
+                        >
+                            {isSigningUp ? 'Creating Account...' : 'Sign Up'}
+                        </GradientButton>
+
+                        <div className={styles.signInTextWrapper}>
+                            <span>Already have an account? &nbsp;</span>
+                            <span 
+                                className={styles.signInText}
+                                onClick={() => router.push('/auth_module/login')}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                Sign In
+                            </span>
+                        </div>
+
+                        <div className={styles.bottomContainer}>
+                             <span className={styles.bottomText}>
+                              Terms of Services
+                             </span>
+                            &nbsp; &#183; &nbsp;
+                            <span className={styles.bottomText}>
+                              Privacy Policy
+                             </span>
+                        </div>
                     </div>
-                )}
-
-                <GradientButton 
-                    onClick={handleSignUp}
-                    disabled={isSigningUp || usernameStatus.isChecking || emailStatus.isChecking}
-                >
-                    {isSigningUp ? 'Creating Account...' : 'Sign Up'}
-                </GradientButton>
-
-                <div className={styles.signInTextWrapper}>
-                    <span>Already have an account? &nbsp;</span>
-                    <span 
-                        className={styles.signInText}
-                        onClick={() => router.push('/auth_module/login')}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        Sign In
-                    </span>
-                </div>
-
-                <div className={styles.bottomContainer}>
-                     <span className={styles.bottomText}>
-                      Terms of Services
-                     </span>
-                    &nbsp; &#183; &nbsp;
-                    <span className={styles.bottomText}>
-                      Privacy Policy
-                     </span>
                 </div>
             </div>
         </div>
