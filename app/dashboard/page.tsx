@@ -1,46 +1,74 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/app/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useAuth } from "@/app/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Header from "@/app/components/header/base/Header";
+import styles from "./dashboard.module.css";
 
 export default function DashboardScreen() {
-    const { user, isAuthenticated, isLoading, logout } = useAuth();
-    const router = useRouter();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const router = useRouter();
 
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push('/auth_module/login');
-        }
-    }, [isAuthenticated, isLoading, router]);
-
-    if (isLoading) {
-        return <div>Loading...</div>;
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/auth_module/login");
     }
+  }, [isAuthenticated, isLoading, router]);
 
-    if (!isAuthenticated) {
-        return null;
-    }
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
+  if (isLoading) {
     return (
-        <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h1>Dashboard</h1>
-                <button onClick={logout} style={{ padding: '8px 16px', cursor: 'pointer' }}>
-                    Logout
-                </button>
-            </div>
-            
-            <div>
-                <h2>Welcome, {user?.username}!</h2>
-                <p>Email: {user?.email}</p>
-                <p>User ID: {user?.id}</p>
-            </div>
-            
-            <div>
-                <h3>Your Algo Arena Journey Starts Here</h3>
-                <p>This is where you'll practice algorithms, compete with others, and grow with your squad.</p>
-            </div>
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Loading your dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return (
+    <div className={styles.dashboardContainer}>
+      <Header onLogout={handleLogout} />
+      
+      <main className={styles.content}>
+        <div className={styles.welcome}>
+          <h1>Welcome, {user?.username}!</h1>
+          <p>Your Algo Arena journey starts here.</p>
         </div>
-    )
+
+        <div className={styles.statsSection}>
+          <div className={styles.statsCard}>
+            <h3>Problems Solved</h3>
+            <div className={styles.statValue}>0</div>
+          </div>
+          
+          <div className={styles.statsCard}>
+            <h3>Current Rank</h3>
+            <div className={styles.statValue}>Beginner</div>
+          </div>
+          
+          <div className={styles.statsCard}>
+            <h3>Contests Joined</h3>
+            <div className={styles.statValue}>0</div>
+          </div>
+        </div>
+
+        <div className={styles.activitySection}>
+          <h2>Recent Activity</h2>
+          <div className={styles.emptyState}>
+            <p>You haven't solved any problems yet. Start your journey by tackling your first challenge!</p>
+            <button className={styles.actionButton}>Browse Problems</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
