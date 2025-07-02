@@ -436,6 +436,20 @@
   transform: scale(1.1);
 }
 
+.teamIndicatorWrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.teamIndicator {
+  color: #5fc5ff;
+  font-size: 20px;
+  margin-left: 4px;
+  line-height: 1;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .header {
