@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Header from "@/app/components/header/base/Header";
 import styles from "./team.module.css";
-import { getCurrentTeam, leaveTeam, promoteToAdmin, deleteTeam, TeamInfo } from "@/app/api/teams/manage-team";
+import { 
+  getCurrentTeam, 
+  leaveTeam, 
+  promoteToAdmin, 
+  demoteAdmin, 
+  deleteTeam, 
+  TeamInfo 
+} from "@/app/api/teams/manage-team";
 import Image from "next/image";
 
 export default function TeamPage() {
@@ -119,6 +126,30 @@ export default function TeamPage() {
     }
   };
 
+  const handleDemoteUser = async (memberEmail: string, username: string) => {
+    if (!confirm(`Are you sure you want to demote ${username} from admin?`)) {
+      return;
+    }
+
+    try {
+      setActionLoading(`demote-${memberEmail}`);
+      const response = await demoteAdmin({ targetUserEmail: memberEmail });
+      console.log('Demotion successful:', response);
+      
+      // Show success message
+      alert(`${username} has been demoted from admin successfully!`);
+      
+      // Refresh team data to reflect changes
+      await fetchTeamInfo();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to demote user';
+      setError(errorMessage);
+      console.error('Demotion error:', err);
+    } finally {
+      setActionLoading('');
+    }
+  };
+
   const copyJoinCode = () => {
     if (team?.join_code) {
       navigator.clipboard.writeText(team.join_code);
@@ -225,14 +256,30 @@ export default function TeamPage() {
                 
                 <div className={styles.memberActions}>
                   {member.is_admin && <span className={styles.adminLabel}>Admin</span>}
-                  {currentUserIsAdmin && !member.is_admin && member.email !== user?.email && (
-                    <button 
-                      className={styles.promoteButton}
-                      onClick={() => handlePromoteUser(member.email, member.username)}
-                      disabled={actionLoading === `promote-${member.email}`}
-                    >
-                      {actionLoading === `promote-${member.email}` ? 'Promoting...' : 'Promote'}
-                    </button>
+                  
+                  {/* Show admin action buttons only if current user is admin and not acting on themselves */}
+                  {currentUserIsAdmin && member.email !== user?.email && (
+                    <div className={styles.adminButtons}>
+                      {!member.is_admin ? (
+                        // Show promote button for non-admin members
+                        <button 
+                          className={styles.promoteButton}
+                          onClick={() => handlePromoteUser(member.email, member.username)}
+                          disabled={actionLoading === `promote-${member.email}`}
+                        >
+                          {actionLoading === `promote-${member.email}` ? 'Promoting...' : 'Promote'}
+                        </button>
+                      ) : (
+                        // Show demote button for admin members
+                        <button 
+                          className={styles.demoteButton}
+                          onClick={() => handleDemoteUser(member.email, member.username)}
+                          disabled={actionLoading === `demote-${member.email}`}
+                        >
+                          {actionLoading === `demote-${member.email}` ? 'Demoting...' : 'Demote'}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

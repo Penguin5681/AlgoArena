@@ -30,6 +30,15 @@ interface PromoteToAdminResponse {
   user: string;  
 }
 
+// Add demote interface
+interface DemoteAdminRequest {
+  targetUserEmail: string;
+}
+
+interface DemoteAdminResponse {
+  message: string;
+}
+
 interface DeleteTeamResponse {
   message: string;
 }
@@ -199,6 +208,43 @@ export const promoteToAdmin = async (promoteData: PromoteToAdminRequest): Promis
     }
     
     throw new Error('Network error occurred while promoting user');
+  }
+};
+
+// Add demote function
+export const demoteAdmin = async (demoteData: DemoteAdminRequest): Promise<DemoteAdminResponse> => {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/team/demote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(demoteData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const error = data as TeamAPIError;
+      throw new Error(error.error || 'Failed to demote user');
+    }
+
+    return data as DemoteAdminResponse;
+  } catch (error) {
+    console.error('Demote user error:', error);
+    
+    if (error instanceof Error) {
+      throw error;
+    }
+    
+    throw new Error('Network error occurred while demoting user');
   }
 };
 

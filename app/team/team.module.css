@@ -243,6 +243,32 @@
   cursor: not-allowed;
 }
 
+.adminButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.demoteButton {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.demoteButton:hover {
+  background: rgba(255, 193, 7, 0.3);
+}
+
+.demoteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .teamActions {
   display: flex;
   justify-content: center;
@@ -318,5 +344,15 @@
   
   .memberActions {
     justify-content: flex-end;
+  }
+  
+  .adminButtons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .promoteButton, .demoteButton {
+    width: 100%;
+    text-align: center;
   }
 }
