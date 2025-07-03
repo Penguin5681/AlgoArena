@@ -191,13 +191,24 @@ const useStopwatch = () => {
   return { timeInSeconds: time, formattedTime: formatTime(time), start, stop, reset, isRunning };
 };
 
-const CodingChallenge = ({ question }: { question: CodingQuestion }) => {
+const CodingChallenge = ({
+  question,
+  onSolved,
+}: {
+  question: CodingQuestion;
+  onSolved: () => void;
+}) => {
   const { timeInSeconds, formattedTime, start, stop } = useStopwatch();
   const [isSolved, setIsSolved] = useState(question.isSolved);
   const [code, setCode] = useState(
     `// ${question.title}\n// ${question.description}\n\nfunction solve() {\n  // Your code goes here\n}`
   );
   const { user } = useAuth();
+
+  useEffect(() => {
+    console.warn("Is solved? => " + question.isSolved)
+    setIsSolved(question.isSolved);
+  }, [question.isSolved]);
 
   const handleMarkAsSolved = async () => {
     if (isSolved) return;
@@ -216,6 +227,7 @@ const CodingChallenge = ({ question }: { question: CodingQuestion }) => {
         userId,
       });
       setIsSolved(true);
+      onSolved(); // Notify parent component
       console.log(`Question ${question.id} progress updated! Time: ${formattedTime}`);
     } catch (error) {
       console.error("Failed to update question progress:", error);
@@ -269,28 +281,36 @@ const PracticeTab = ({ topicId }: { topicId: number }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const token = getAuthToken();
-    if (!user) return;
+  const loadQuestions = async () => {
+    setIsLoading(true);
+    try {
+      const apiQuestions = await fetchTopicQuestions(topicId);
+      const uiQuestions = apiQuestions.map((q) => ({
+        ...q,
+        topicId,
+        isSolved: q.is_passed || false,
+      }));
+      setQuestions(uiQuestions);
+    } catch (error) {
+      console.error("Failed to fetch questions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const loadQuestions = async () => {
-      setIsLoading(true);
-      try {
-        const apiQuestions = await fetchTopicQuestions(topicId);
-        const uiQuestions = apiQuestions.map((q) => ({
-          ...q,
-          topicId,
-          isSolved: q.is_passed || false,
-        }));
-        setQuestions(uiQuestions);
-      } catch (error) {
-        console.error("Failed to fetch questions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadQuestions();
+  useEffect(() => {
+    if (user) {
+      loadQuestions();
+    }
   }, [topicId, user]);
+
+  const handleQuestionSolved = (solvedQuestionId: string) => {
+    setQuestions(currentQuestions =>
+      currentQuestions.map(q =>
+        q.id === solvedQuestionId ? { ...q, isSolved: true } : q
+      )
+    );
+  };
 
   if (isLoading) return <div>Loading Questions...</div>;
   if (questions.length === 0) {
@@ -300,7 +320,11 @@ const PracticeTab = ({ topicId }: { topicId: number }) => {
   return (
     <div className={styles.practiceTabContainer}>
       {questions.map((q) => (
-        <CodingChallenge key={q.id} question={q} />
+        <CodingChallenge
+          key={q.id}
+          question={q}
+          onSolved={() => handleQuestionSolved(q.id)}
+        />
       ))}
     </div>
   );

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getUserData } from "../authentication/auth";
 
 const BASE_URL = 'http://localhost:5000/api/learn';
 
@@ -76,8 +77,11 @@ export const fetchTopicDetails = async (id: number, ): Promise<TopicDetails> => 
   return res.data;
 };
 
-export const fetchTopicQuestions = async (id: number, ): Promise<Question[]> => {
-  const res = await axios.get(`${BASE_URL}/topic/${id}/questions`);
+export const fetchTopicQuestions = async (topicId: number, ): Promise<Question[]> => {
+  const userId = getUserData()?.id;
+  const res = await axios.get(`${BASE_URL}/topic/${topicId}/questions`, {
+    params: { user_id: userId },
+  });
   return res.data;
 };
 
