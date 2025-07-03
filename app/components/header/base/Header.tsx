@@ -2,22 +2,25 @@ import { useAuth } from "@/app/context/AuthContext";
 import styles from '../css/Header.module.css';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TeamModal from '@/app/components/team/TeamModal';
 import { getCurrentTeam } from '@/app/api/teams/manage-team';
 import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
   onLogout?: () => void;
+  userXP?: number;
 }
 
-export default function Header({ onLogout }: HeaderProps) {
-  const { user } = useAuth();
+export default function Header({ onLogout, userXP }: HeaderProps) {
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [hasTeam, setHasTeam] = useState<boolean | null>(null);
+    const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);
@@ -25,11 +28,16 @@ export default function Header({ onLogout }: HeaderProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      const isScrolled = window.scrollY > 20;
-      setScrolled(isScrolled);
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
+        setVisible(false);
+      } else {
+        setVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -74,7 +82,7 @@ export default function Header({ onLogout }: HeaderProps) {
           </div>
 
           <nav className={styles.navigation}>
-            <Link href="/learn" className={styles.navLink}>
+            <Link href="/core-modules/learn-module" className={styles.navLink}>
               <span>Learn</span>
             </Link>
             <Link href="/problems" className={styles.navLink}>
@@ -100,6 +108,11 @@ export default function Header({ onLogout }: HeaderProps) {
             {user && (
               <div className={styles.userProfile}>
                 <div className={styles.userInfo} onClick={toggleDropdown}>
+                  {typeof userXP !== 'undefined' && (
+                    <div className={styles.xpDisplay}>
+                      <span>💎</span> {userXP.toLocaleString()} XP
+                    </div>
+                  )}
                   <span className={styles.username}>{user.username}</span>
                   <div className={styles.avatar}>
                     {user.profilePicture ? (
@@ -124,9 +137,9 @@ export default function Header({ onLogout }: HeaderProps) {
                     <Link href="/profile" className={styles.dropdownItem}>Profile</Link>
                     <Link href="/settings" className={styles.dropdownItem}>Settings</Link>
                     <div className={styles.divider}></div>
-                    <button 
-                      className={styles.logoutButton} 
-                      onClick={onLogout}
+                    <button
+                      className={styles.logoutButton}
+                      onClick={logout}
                     >
                       Logout
                     </button>

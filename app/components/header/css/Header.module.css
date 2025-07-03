@@ -58,6 +58,16 @@
   animation: float 6s ease-in-out infinite;
 }
 
+.header.visible {
+  transform: translateY(0);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header.hidden {
+  transform: translateY(-120%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .header::before {
   content: '';
   position: absolute;
@@ -218,6 +228,34 @@
 .navLink:hover::before {
   opacity: 1;
   transform: scale(1);
+}
+
+.xpDisplay {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(45deg, rgba(255, 193, 7, 0.1), rgba(255, 235, 59, 0.2));
+  color: #ffeb3b;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  font-family: 'Fira Code', monospace;
+}
+
+.xpDisplay span {
+  margin-right: 6px;
+  font-size: 14px;
+  line-height: 1;
+  animation: float 3s ease-in-out infinite;
+}
+
+.userInfo:hover .xpDisplay {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
 .userSection {
