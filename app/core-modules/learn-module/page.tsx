@@ -211,6 +211,7 @@ const CodingChallenge = ({
   const [isRunning, setIsRunning] = useState(false);
   const [executionResult, setExecutionResult] = useState<CodeExecutionResult | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>("javascript");
+  const [isExpanded, setIsExpanded] = useState(false);
   const [code, setCode] = useState(
     `// ${question.title}\n// ${question.description}\n\nfunction solve() {\n  // Your code goes here\n  console.log("Hello World");\n}`
   );
@@ -259,7 +260,6 @@ const CodingChallenge = ({
       setExecutionResult(result);
     } catch (error) {
       console.error("Code execution failed:", error);
-      // Create a mock error result for UI display
       setExecutionResult({
         id: -1,
         status: "error",
@@ -332,97 +332,120 @@ const CodingChallenge = ({
   };
 
   return (
-    <div className={styles.codingChallenge}>
-      <div className={styles.challengeHeader}>
-        <h3 className={styles.challengeTitle}>{question.title}</h3>
-        <div className={styles.challengeMeta}>
+    <div className={`${styles.codingChallenge} ${isExpanded ? styles.expanded : styles.collapsed}`}>
+      {/* Minimized Header */}
+      <div 
+        className={styles.challengeHeaderMinimized}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className={styles.challengeHeaderLeft}>
+          <div className={styles.expandIcon}>
+            <ChevronRight 
+              size={20} 
+              className={`${styles.chevron} ${isExpanded ? styles.rotated : ''}`} 
+            />
+          </div>
+          <div className={styles.challengeInfo}>
+            <h3 className={styles.challengeTitle}>{question.title}</h3>
+            <p className={styles.challengeDescription}>{question.description}</p>
+          </div>
+        </div>
+        <div className={styles.challengeHeaderRight}>
           <span
-            className={`${styles.difficultyBadge} ${
-              difficultyStyles[question.difficulty]
-            }`}
+            className={`${styles.difficultyBadge} ${difficultyStyles[question.difficulty]}`}
           >
             {question.difficulty}
           </span>
           <span className={styles.xpBadge}>{question.xp} XP</span>
-        </div>
-      </div>
-      
-      <div className={styles.languageSelector}>
-        <label>Language:</label>
-        <select 
-          value={selectedLanguage} 
-          onChange={(e) => handleLanguageChange(e.target.value as Language)}
-          className={styles.languageSelect}
-        >
-          <option value="javascript">JavaScript</option>
-          <option value="python">Python</option>
-          <option value="cpp">C++</option>
-          <option value="java">Java</option>
-        </select>
-      </div>
-
-      <div className={styles.challengeBody}>
-        <MonacoEditor
-          language={selectedLanguage}
-          value={code}
-          onCodeChange={setCode}
-          onFocus={start}
-        />
-        <div className={styles.runButtonContainer}>
-          <button
-            onClick={handleRunCode}
-            disabled={isRunning}
-            className={`${styles.runButton} ${isRunning ? styles.running : ''}`}
-          >
-            <Play size={16} className={styles.runIcon} />
-            {isRunning ? 'Running...' : 'Run Code'}
-          </button>
-        </div>
-      </div>
-
-      {executionResult && (
-        <div className={styles.executionResult}>
-          <div className={styles.resultHeader}>
-            <div className={styles.resultStatus}>
-              {getStatusIcon(executionResult.status)}
-              <span className={getStatusColor(executionResult.status)}>
-                {executionResult.status.toUpperCase()}
-              </span>
-            </div>
-            <div className={styles.resultMeta}>
-              <span>⏱️ {formatExecutionTime(executionResult.executionTime)}</span>
-              <span>💾 {formatMemoryUsage(executionResult.memoryUsage)}</span>
-            </div>
+          <div className={styles.statusBadge}>
+            {isSolved ? (
+              <CheckCircle2 size={20} className="text-green-400" />
+            ) : (
+              <Circle size={20} className="text-gray-400" />
+            )}
           </div>
-
-          {executionResult.stdout && (
-            <div className={styles.resultSection}>
-              <h4>Output:</h4>
-              <pre className={styles.resultOutput}>
-                {executionResult.stdout}
-              </pre>
-            </div>
-          )}
-
-          {executionResult.stderr && (
-            <div className={styles.resultSection}>
-              <h4>Error:</h4>
-              <pre className={styles.resultError}>
-                {executionResult.stderr}
-              </pre>
-            </div>
-          )}
         </div>
-      )}
+      </div>
 
-      <div className={styles.challengeFooter}>
-        <div className={styles.stopwatch}>
-          <Timer size={20} className="inline-block mr-2" />
-          <span>{formattedTime}</span>
+      {/* Expanded Content */}
+      <div className={`${styles.challengeContent} ${isExpanded ? styles.contentExpanded : styles.contentCollapsed}`}>
+        <div className={styles.languageSelector}>
+          <label>Language:</label>
+          <select 
+            value={selectedLanguage} 
+            onChange={(e) => handleLanguageChange(e.target.value as Language)}
+            className={styles.languageSelect}
+          >
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="cpp">C++</option>
+            <option value="java">Java</option>
+          </select>
         </div>
-        <GradientButton onClick={handleMarkAsSolved} disabled={isSolved}>
-          {isSolved ? "Solved" : "Mark as Solved"}
-        </GradientButton>
+
+        <div className={styles.challengeBody}>
+          <MonacoEditor
+            language={selectedLanguage}
+            value={code}
+            onCodeChange={setCode}
+            onFocus={start}
+          />
+          <div className={styles.runButtonContainer}>
+            <button
+              onClick={handleRunCode}
+              disabled={isRunning}
+              className={`${styles.runButton} ${isRunning ? styles.running : ''}`}
+            >
+              <Play size={16} className={styles.runIcon} />
+              {isRunning ? 'Running...' : 'Run Code'}
+            </button>
+          </div>
+        </div>
+
+        {executionResult && (
+          <div className={styles.executionResult}>
+            <div className={styles.resultHeader}>
+              <div className={styles.resultStatus}>
+                {getStatusIcon(executionResult.status)}
+                <span className={getStatusColor(executionResult.status)}>
+                  {executionResult.status.toUpperCase()}
+                </span>
+              </div>
+              <div className={styles.resultMeta}>
+                <span>⏱️ {formatExecutionTime(executionResult.executionTime)}</span>
+                <span>💾 {formatMemoryUsage(executionResult.memoryUsage)}</span>
+              </div>
+            </div>
+
+            {executionResult.stdout && (
+              <div className={styles.resultSection}>
+                <h4>Output:</h4>
+                <pre className={styles.resultOutput}>
+                  {executionResult.stdout}
+                </pre>
+              </div>
+            )}
+
+            {executionResult.stderr && (
+              <div className={styles.resultSection}>
+                <h4>Error:</h4>
+                <pre className={styles.resultError}>
+                  {executionResult.stderr}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className={styles.challengeFooter}>
+          <div className={styles.stopwatch}>
+            <Timer size={20} className="inline-block mr-2" />
+            <span>{formattedTime}</span>
+          </div>
+          <GradientButton onClick={handleMarkAsSolved} disabled={isSolved}>
+            {isSolved ? "Solved" : "Mark as Solved"}
+          </GradientButton>
+        </div>
       </div>
     </div>
   );

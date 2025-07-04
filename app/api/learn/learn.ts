@@ -17,7 +17,6 @@ export type CodeExample = {
   code: string;
 };
 
-// Corrected: Added xp to match the 'SELECT *' from the topics table.
 export type TopicDetails = {
   id: number;
   title: string;
