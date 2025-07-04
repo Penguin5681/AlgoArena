@@ -18,10 +18,10 @@ export default function GetStartedPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      window.location.href = "/dashboard";
-    }
-  }, [isAuthenticated, isLoading, router]);
+    // if (!isLoading && isAuthenticated) {
+      window.location.href = "/core-modules/leaderboard-module";
+    // }
+  }, []);
 
   const handleGoogleSignIn = async () => {
     setIsGoogleSigningIn(true);
