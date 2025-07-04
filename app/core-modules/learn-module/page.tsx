@@ -37,6 +37,16 @@ import remarkGfm from "remark-gfm";
 import ZoomableImage from "@/app/components/image/ZoomableImage";
 import { useAuth } from "@/app/context/AuthContext";
 import { getAuthToken, getUserData } from "@/app/api/authentication/auth";
+import {
+  submitCodeAndWaitForResult,
+  CodeExecutionResult,
+  formatExecutionTime,
+  formatMemoryUsage,
+  Language,
+} from "@/app/api/code-exec/code-executor";
+import { CheckCircle, XCircle, Clock, Activity } from "lucide-react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 type TopicStatus = "completed" | "ongoing" | "not_started";
 
@@ -73,7 +83,6 @@ interface MCQ {
   correctAnswerIndex: number;
 }
 
-// --- HELPER COMPONENTS ---
 
 const StatusIcon = ({ status }: { status: TopicStatus }) => {
   switch (status) {
@@ -86,7 +95,6 @@ const StatusIcon = ({ status }: { status: TopicStatus }) => {
   }
 };
 
-// --- MAIN COMPONENTS ---
 
 const Sidebar = ({
   sections,
@@ -200,15 +208,72 @@ const CodingChallenge = ({
 }) => {
   const { timeInSeconds, formattedTime, start, stop } = useStopwatch();
   const [isSolved, setIsSolved] = useState(question.isSolved);
+  const [isRunning, setIsRunning] = useState(false);
+  const [executionResult, setExecutionResult] = useState<CodeExecutionResult | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>("javascript");
   const [code, setCode] = useState(
-    `// ${question.title}\n// ${question.description}\n\nfunction solve() {\n  // Your code goes here\n}`
+    `// ${question.title}\n// ${question.description}\n\nfunction solve() {\n  // Your code goes here\n  console.log("Hello World");\n}`
   );
   const { user } = useAuth();
 
   useEffect(() => {
-    console.warn("Is solved? => " + question.isSolved)
     setIsSolved(question.isSolved);
   }, [question.isSolved]);
+
+  const handleLanguageChange = (language: Language) => {
+    setSelectedLanguage(language);
+    const templates = {
+      javascript: `// ${question.title}\n// ${question.description}\n\nfunction solve() {\n  // Your code goes here\n  console.log("Hello World");\n}`,
+      python: `# ${question.title}\n# ${question.description}\n\ndef solve():\n    # Your code goes here\n    print("Hello World")\n\nsolve()`,
+      cpp: `// ${question.title}\n// ${question.description}\n\n#include <iostream>\nusing namespace std;\n\nint main() {\n    // Your code goes here\n    cout << "Hello World" << endl;\n    return 0;\n}`,
+      java: `// ${question.title}\n// ${question.description}\n\npublic class Solution {\n    public static void main(String[] args) {\n        // Your code goes here\n        System.out.println("Hello World");\n    }\n}`
+    };
+    setCode(templates[language]);
+  };
+
+  const handleRunCode = async () => {
+    if (!user) {
+      console.error("User not authenticated");
+      return;
+    }
+
+    const userId = getUserData()?.id;
+    if (!userId) {
+      console.error("User ID not found");
+      return;
+    }
+
+    setIsRunning(true);
+    setExecutionResult(null);
+
+    try {
+      console.log("Submitting code for execution...");
+      const result = await submitCodeAndWaitForResult({
+        code,
+        language: selectedLanguage,
+        stdin: "",
+        userId,
+      });
+
+      console.log("Execution completed:", result);
+      setExecutionResult(result);
+    } catch (error) {
+      console.error("Code execution failed:", error);
+      // Create a mock error result for UI display
+      setExecutionResult({
+        id: -1,
+        status: "error",
+        stdout: "",
+        stderr: error instanceof Error ? error.message : "Unknown error occurred",
+        executionTime: 0,
+        memoryUsage: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   const handleMarkAsSolved = async () => {
     if (isSolved) return;
@@ -227,7 +292,7 @@ const CodingChallenge = ({
         userId,
       });
       setIsSolved(true);
-      onSolved(); // Notify parent component
+      onSolved();
       console.log(`Question ${question.id} progress updated! Time: ${formattedTime}`);
     } catch (error) {
       console.error("Failed to update question progress:", error);
@@ -238,6 +303,32 @@ const CodingChallenge = ({
     easy: styles.difficultyEasy,
     medium: styles.difficultyMedium,
     hard: styles.difficultyHard,
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "success":
+        return <CheckCircle size={16} className="text-green-400" />;
+      case "error":
+        return <XCircle size={16} className="text-red-400" />;
+      case "timeout":
+        return <Clock size={16} className="text-yellow-400" />;
+      default:
+        return <Activity size={16} className="text-blue-400" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "success":
+        return "text-green-400";
+      case "error":
+        return "text-red-400";
+      case "timeout":
+        return "text-yellow-400";
+      default:
+        return "text-blue-400";
+    }
   };
 
   return (
@@ -255,14 +346,75 @@ const CodingChallenge = ({
           <span className={styles.xpBadge}>{question.xp} XP</span>
         </div>
       </div>
+      
+      <div className={styles.languageSelector}>
+        <label>Language:</label>
+        <select 
+          value={selectedLanguage} 
+          onChange={(e) => handleLanguageChange(e.target.value as Language)}
+          className={styles.languageSelect}
+        >
+          <option value="javascript">JavaScript</option>
+          <option value="python">Python</option>
+          <option value="cpp">C++</option>
+          <option value="java">Java</option>
+        </select>
+      </div>
+
       <div className={styles.challengeBody}>
         <MonacoEditor
-          language="javascript"
+          language={selectedLanguage}
           value={code}
           onCodeChange={setCode}
-          onFocus={start} // Start timer on focus
+          onFocus={start}
         />
+        <div className={styles.runButtonContainer}>
+          <button
+            onClick={handleRunCode}
+            disabled={isRunning}
+            className={`${styles.runButton} ${isRunning ? styles.running : ''}`}
+          >
+            <Play size={16} className={styles.runIcon} />
+            {isRunning ? 'Running...' : 'Run Code'}
+          </button>
+        </div>
       </div>
+
+      {executionResult && (
+        <div className={styles.executionResult}>
+          <div className={styles.resultHeader}>
+            <div className={styles.resultStatus}>
+              {getStatusIcon(executionResult.status)}
+              <span className={getStatusColor(executionResult.status)}>
+                {executionResult.status.toUpperCase()}
+              </span>
+            </div>
+            <div className={styles.resultMeta}>
+              <span>⏱️ {formatExecutionTime(executionResult.executionTime)}</span>
+              <span>💾 {formatMemoryUsage(executionResult.memoryUsage)}</span>
+            </div>
+          </div>
+
+          {executionResult.stdout && (
+            <div className={styles.resultSection}>
+              <h4>Output:</h4>
+              <pre className={styles.resultOutput}>
+                {executionResult.stdout}
+              </pre>
+            </div>
+          )}
+
+          {executionResult.stderr && (
+            <div className={styles.resultSection}>
+              <h4>Error:</h4>
+              <pre className={styles.resultError}>
+                {executionResult.stderr}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={styles.challengeFooter}>
         <div className={styles.stopwatch}>
           <Timer size={20} className="inline-block mr-2" />
@@ -498,10 +650,56 @@ const LearnTab = ({ details }: { details: ApiTopicDetails }) => {
     details.code_examples[0]?.language || ""
   );
 
+  // Custom renderer for code blocks
+  const CodeBlock = ({ language, children }: { language?: string; children: string }) => {
+    return (
+      <SyntaxHighlighter
+        language={language || 'text'}
+        style={vscDarkPlus}
+        customStyle={{
+          background: 'rgba(15, 23, 42, 0.9)',
+          border: '1px solid rgba(51, 65, 85, 0.5)',
+          borderRadius: '8px',
+          padding: '1.2rem',
+          fontSize: '14px',
+          fontFamily: '"Fira Code", "Courier New", monospace',
+          lineHeight: '1.6',
+        }}
+        showLineNumbers={false}
+        wrapLines={true}
+        wrapLongLines={true}
+      >
+        {children}
+      </SyntaxHighlighter>
+    );
+  };
+
   return (
     <div className={styles.learnTabContainer}>
       <div className={styles.markdownContent}>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+              const language = match ? match[1] : '';
+              
+              if (!inline && language) {
+                return (
+                  <CodeBlock language={language}>
+                    {String(children).replace(/\n$/, '')}
+                  </CodeBlock>
+                );
+              }
+              
+              return (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            }
+          }}
+        >
           {details.markdown}
         </ReactMarkdown>
       </div>
@@ -541,7 +739,9 @@ const LearnTab = ({ details }: { details: ApiTopicDetails }) => {
                   (ex) => ex.language === activeCodeTab
                 )?.code || ""
               }
-              onCodeChange={() => {}} // Read-only
+              onCodeChange={() => {
+                
+              }} 
             />
           </div>
         </div>

@@ -11,6 +11,7 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@react-oauth/google": "^0.12.2",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.10.0",
     "dotenv": "^17.0.0",
     "firebase": "^11.10.0",
@@ -21,6 +22,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^8.0.6",
+    "react-syntax-highlighter": "^15.6.1",
+    "rehype-highlight": "^7.0.2",
     "remark-gfm": "^1.0.0"
   },
   "devDependencies": {
