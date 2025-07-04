@@ -35,7 +35,6 @@ export default function TeamPage() {
     }
   }, [isAuthenticated]);
 
-  // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
     if (!team || !user) return false;
     const currentUserMember = team.members.find(member => member.email === user.email);

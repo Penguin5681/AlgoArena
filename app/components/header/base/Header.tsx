@@ -99,8 +99,8 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
                 </div>
               
             </div>
-            <Link href="/rankings" className={styles.navLink}>
-              <span>Rankings</span>
+            <Link href="/core-modules/leaderboard-module" className={styles.navLink}>
+              <span>Leaderboard</span>
             </Link>
           </nav>
 
