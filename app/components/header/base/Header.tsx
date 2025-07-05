@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import TeamModal from '@/app/components/team/TeamModal';
 import { getCurrentTeam } from '@/app/api/teams/manage-team';
 import { useRouter } from 'next/navigation';
+import GradientButton from '@/app/components/buttons/base/GradientButton';
 
 interface HeaderProps {
   onLogout?: () => void;
@@ -15,16 +16,52 @@ interface HeaderProps {
 export default function Header({ onLogout, userXP }: HeaderProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showProfileCard, setShowProfileCard] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [hasTeam, setHasTeam] = useState<boolean | null>(null);
-    const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const profileCardRef = useRef<HTMLDivElement>(null);
+  const userInfoRef = useRef<HTMLDivElement>(null);
 
-  const toggleDropdown = () => {
-    setShowDropdown(!showDropdown);
+  const [userStatus, setUserStatus] = useState<'online' | 'idle' | 'offline'>('online');
+
+  const toggleProfileCard = () => {
+    setShowProfileCard(!showProfileCard);
   };
+
+  // Handle click outside to close profile card
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showProfileCard && 
+          profileCardRef.current && 
+          userInfoRef.current &&
+          !profileCardRef.current.contains(event.target as Node) &&
+          !userInfoRef.current.contains(event.target as Node)) {
+        setShowProfileCard(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileCard]);
+
+  // Handle ESC key to close profile card
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showProfileCard) {
+        setShowProfileCard(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [showProfileCard]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,6 +103,15 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return '#10b981';
+      case 'idle': return '#f59e0b';
+      case 'offline': return '#6b7280';
+      default: return '#6b7280';
+    }
+  };
+
   return (
     <>
       <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
@@ -85,7 +131,7 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
             <Link href="/core-modules/learn-module" className={styles.navLink}>
               <span>Learn</span>
             </Link>
-            <Link href="/problems" className={styles.navLink}>
+            <Link href="/core-modules/problem-module" className={styles.navLink}>
               <span>Problems</span>
             </Link>
             <div 
@@ -107,7 +153,11 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
           <div className={styles.userSection}>
             {user && (
               <div className={styles.userProfile}>
-                <div className={styles.userInfo} onClick={toggleDropdown}>
+                <div 
+                  className={styles.userInfo} 
+                  onClick={toggleProfileCard}
+                  ref={userInfoRef}
+                >
                   {typeof userXP !== 'undefined' && (
                     <div className={styles.xpDisplay}>
                       <span>💎</span> {userXP.toLocaleString()} XP
@@ -132,17 +182,74 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
                   </div>
                 </div>
                 
-                {showDropdown && (
-                  <div className={styles.dropdown}>
-                    <Link href="/profile" className={styles.dropdownItem}>Profile</Link>
-                    <Link href="/settings" className={styles.dropdownItem}>Settings</Link>
-                    <div className={styles.divider}></div>
-                    <button
-                      className={styles.logoutButton}
-                      onClick={logout}
-                    >
-                      Logout
-                    </button>
+                {showProfileCard && (
+                  <div className={styles.profileCard} ref={profileCardRef}>
+                    <div className={styles.profileCardImageSection}>
+                      <div className={styles.profileCardAvatar}>
+                        {user.profilePicture ? (
+                          <Image
+                            src={user.profilePicture} 
+                            alt="Profile" 
+                            width={120} 
+                            height={120} 
+                            className={styles.profileCardAvatarImage}
+                            unoptimized={true}
+                          />
+                        ) : (
+                          <div className={styles.profileCardDefaultAvatar}>
+                            {user.username.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div 
+                          className={styles.statusIndicator}
+                          style={{ backgroundColor: getStatusColor(userStatus) }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className={styles.profileCardContent}>
+                      <h3 className={styles.profileCardName}>{user.username}</h3>
+                      <p className={styles.profileCardTitle}>Full Stack Developer</p>
+                      
+                      <div className={styles.profileCardInfo}>
+                        <div className={styles.profileCardLocation}>
+                          <span>📍 Pakistan</span>
+                        </div>
+                        
+                        <div className={styles.profileCardStatus}>
+                          <span className={styles.statusLabel}>Status:</span>
+                          <span 
+                            className={styles.statusValue}
+                            style={{ color: getStatusColor(userStatus) }}
+                          >
+                            {userStatus.charAt(0).toUpperCase() + userStatus.slice(1)}
+                          </span>
+                        </div>
+                        
+                        <div className={styles.profileCardTeam}>
+                          <span className={styles.teamLabel}>Team:</span>
+                          <span className={styles.teamValue}>Lana Rhoades Fan Club</span>
+                        </div>
+                      </div>
+                      
+                      <div className={styles.profileCardActions}>
+                        <Link href="/core-modules/profile-module">
+                          <GradientButton>
+                            View Profile
+                          </GradientButton>
+                        </Link>
+                        <GradientButton
+                          onClick={logout}
+                          style={{ 
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            color: '#ef4444'
+                          }}
+                        >
+                          Logout
+                        </GradientButton>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

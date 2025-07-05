@@ -1,10 +1,11 @@
 .pageBackground {
-  background-image: url("/background4.jpg");
+  background-image: linear-gradient(rgba(10, 10, 20, 0.7), rgba(15, 15, 30, 0.8)), url("/background4.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   min-height: 100vh;
+  padding: 80px 0 40px;
+  color: #e0e0e0;
   display: flex;
   justify-content: center;
-  align-items: center;
 }

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import Modal from '../modal/base/Modal';
 import styles from '../modal/css/Modal.module.css';
