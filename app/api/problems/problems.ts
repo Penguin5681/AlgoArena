@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { getAuthToken } from '../authentication/auth';
 import { useState } from 'react';
 dotenv.config();
 
@@ -141,6 +142,49 @@ export interface Submission {
 export interface SubmissionResponse {
   success: boolean;
   data: Submission;
+}
+
+export interface RawSubmissionPayload {
+  language: string;
+  code: string;
+}
+
+export interface RawSubmissionResponse {
+  success: boolean;
+  data: {
+    submissionId: number;
+    status: string;
+    message: string;
+  };
+}
+
+export interface TestResult {
+  input: string;
+  passed: boolean;
+  isSample: boolean;
+  testCaseId: number;
+  actualOutput: string;
+  expectedOutput: string;
+}
+
+export interface RawSubmissionResult {
+  submissionId: number;
+  language: string;
+  status: 'pending' | 'success' | 'runtime_error' | 'compile_error' | 'wrong_answer' | 'time_limit_exceeded';
+  stdout: string | null;
+  stderr: string | null;
+  executionTime: number | null;
+  problemTitle: string;
+  testResults: TestResult[];
+  testsPassed: number;
+  totalTests: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RawSubmissionResultResponse {
+  success: boolean;
+  data: RawSubmissionResult;
 }
 
 // API Functions
@@ -313,6 +357,61 @@ export async function getSubmissionResult(submissionId: number): Promise<Submiss
     return await response.json();
   } catch (error) {
     console.error('Error fetching submission result:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch submission result');
+  }
+}
+
+export async function submitRawCodeForProblem(problemId: string, payload: RawSubmissionPayload): Promise<RawSubmissionResponse> {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    const response = await fetch(`${CODE_EXECUTION_URL}/problems/${problemId}/submit-raw`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error submitting raw code for problem:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to submit code');
+  }
+}
+
+export async function getRawSubmissionResult(submissionId: number): Promise<RawSubmissionResultResponse> {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    const response = await fetch(`${CODE_EXECUTION_URL}/submissions/${submissionId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching raw submission result:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch submission result');
   }
 }

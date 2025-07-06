@@ -1,20 +1,17 @@
 "use client";
-
-import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import Header from "@/app/components/header/base/Header";
 import MonacoEditor from "@/app/components/editor/MonacoEditor";
+import styles from "./problem.module.css";
 import {
   getProblemById,
-  ProblemWithTestCases,
+  submitRawCodeForProblem,
+  getRawSubmissionResult,
   getProblemDifficultyColor,
-  submitCodeForProblem,
-  submitCodeForCompilation,
-  getSubmissionResult,
-  Submission,
-  SubmissionTestResult,
+  ProblemWithTestCases,
+  RawSubmissionResult,
 } from "@/app/api/problems/problems";
-import styles from "./problem.module.css";
 import {
   FaPlay,
   FaCheck,
@@ -30,30 +27,42 @@ import {
 } from "react-icons/fa";
 
 const languageTemplates = {
-  javascript: `function solution(input) {
-    // Your solution here
-    
-    return result;
-}`,
-  python: `def solution(input):
-    # Your solution here
-    
-    return result`,
-  java: `public class Solution {
-    public static String solution(String input) {
-        // Your solution here
-        
-        return result;
-    }
-}`,
   cpp: `#include <iostream>
-#include <string>
+#include <vector>
 using namespace std;
 
-string solution(string input) {
+int main() {
     // Your solution here
     
-    return result;
+    return 0;
+}`,
+  javascript: `// Read input
+const readline = require('readline');
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+rl.on('line', (line) => {
+    // Your solution here
+    console.log(line);
+    rl.close();
+});`,
+  python: `# Your solution here
+import sys
+
+for line in sys.stdin:
+    # Process input
+    print(line.strip())`,
+  java: `import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        // Your solution here
+        
+        scanner.close();
+    }
 }`,
 };
 
@@ -62,23 +71,23 @@ export default function ProblemPage() {
   const [problem, setProblem] = useState<ProblemWithTestCases | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState("javascript");
-  const [code, setCode] = useState(languageTemplates.javascript);
+  const [selectedLanguage, setSelectedLanguage] = useState("cpp");
+  const [code, setCode] = useState(languageTemplates.cpp);
   const [isRunning, setIsRunning] = useState(false);
-  const [submission, setSubmission] = useState<Submission | null>(null);
-  const [output, setOutput] = useState<string>("");
+  const [submission, setSubmission] = useState<RawSubmissionResult | null>(null);
   const [showHints, setShowHints] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "description" | "testcases" | "output"
   >("description");
   const [showSampleOnly, setShowSampleOnly] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const problemId = params.id;
     if (problemId) {
       console.log("Loading problem with ID:", problemId);
-      loadProblem(problemId as string); // No need to parse as integer
+      loadProblem(problemId as string);
     }
     return () => {
       if (pollingRef.current) {
@@ -117,12 +126,16 @@ export default function ProblemPage() {
 
     pollingRef.current = setInterval(async () => {
       try {
-        const result = await getSubmissionResult(submissionId);
+        const result = await getRawSubmissionResult(submissionId);
         if (result.success && result.data.status !== 'pending') {
           if (pollingRef.current) clearInterval(pollingRef.current);
           setSubmission(result.data);
-          setOutput(result.data.stdout || result.data.stderr || "");
           setIsRunning(false);
+          
+          // Show success modal if all tests passed
+          if (result.data.status === 'success' && result.data.testsPassed === result.data.totalTests) {
+            setShowSuccessModal(true);
+          }
         }
       } catch (err) {
         if (pollingRef.current) clearInterval(pollingRef.current);
@@ -132,46 +145,20 @@ export default function ProblemPage() {
     }, 2000);
   };
 
-  const handleRunCode = async () => {
-    if (!problem) return;
-
-    setIsRunning(true);
-    setActiveTab("output");
-    setSubmission(null);
-    setOutput("");
-    setError(null);
-
-    try {
-      const payload = {
-        language: selectedLanguage,
-        code,
-        stdin: problem.sampleTestCases[0]?.input || "",
-      };
-      const response = await submitCodeForCompilation(payload);
-      if (response.success) {
-        pollSubmissionStatus(response.data.submissionId);
-      } else {
-        setError("Failed to start compilation.");
-        setIsRunning(false);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred while running code.");
-      setIsRunning(false);
-    }
-  };
-
   const handleSubmitCode = async () => {
     if (!problem) return;
 
     setIsRunning(true);
     setActiveTab("output");
     setSubmission(null);
-    setOutput("");
     setError(null);
 
     try {
-      const payload = { language: selectedLanguage, code };
-      const response = await submitCodeForProblem(problem.id, payload);
+      const payload = { 
+        language: selectedLanguage, 
+        code 
+      };
+      const response = await submitRawCodeForProblem(problem.id, payload);
       if (response.success) {
         pollSubmissionStatus(response.data.submissionId);
       } else {
@@ -184,9 +171,7 @@ export default function ProblemPage() {
     }
   };
 
-  // Optional: Enhanced constraint rendering with mathematical expression detection
   const renderConstraint = (constraint: string) => {
-    // Check if constraint contains mathematical expressions
     const mathPattern = /(\d+(\.\d+)?|\w+)\s*([<>=!]+)\s*(\d+(\.\d+)?|\w+)/g;
     const parts = constraint.split(mathPattern);
 
@@ -195,6 +180,53 @@ export default function ProblemPage() {
     }
 
     return <span>{constraint}</span>;
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <FaCheckCircle className="text-green-400" />;
+      case 'runtime_error':
+      case 'compile_error':
+      case 'wrong_answer':
+        return <FaTimesCircle className="text-red-400" />;
+      case 'time_limit_exceeded':
+        return <FaClock className="text-yellow-400" />;
+      default:
+        return <FaTerminal className="text-blue-400" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'text-green-400';
+      case 'runtime_error':
+      case 'compile_error':
+      case 'wrong_answer':
+        return 'text-red-400';
+      case 'time_limit_exceeded':
+        return 'text-yellow-400';
+      default:
+        return 'text-blue-400';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'Accepted';
+      case 'runtime_error':
+        return 'Runtime Error';
+      case 'compile_error':
+        return 'Compile Error';
+      case 'wrong_answer':
+        return 'Wrong Answer';
+      case 'time_limit_exceeded':
+        return 'Time Limit Exceeded';
+      default:
+        return status;
+    }
   };
 
   if (loading) {
@@ -392,42 +424,44 @@ export default function ProblemPage() {
                     {isRunning && !submission && (
                        <div className={styles.emptyOutput}>
                          <div className={styles.spinner}></div>
-                         <p>Executing code...</p>
+                         <p>Testing your solution...</p>
                        </div>
                     )}
-                    {submission && submission.test_results ? (
+                    {submission && submission.testResults ? (
                       <div className={styles.testResultsContainer}>
                         <div className={styles.testResultsHeader}>
-                          <h3>Test Results: <span className={`${styles.status} ${styles[submission.status]}`}>{submission.status.replace('_', ' ')}</span></h3>
+                          <h3>
+                            Test Results: 
+                            <span className={`${styles.status} ${getStatusColor(submission.status)}`}>
+                              {getStatusIcon(submission.status)}
+                              {getStatusText(submission.status)}
+                            </span>
+                          </h3>
                           <div className={styles.testResultsSummary}>
-                            {submission.tests_passed} /{" "}
-                            {submission.total_tests} passed
+                            {submission.testsPassed} / {submission.totalTests} passed
                           </div>
                         </div>
 
                         <div className={styles.testResultsList}>
-                          {submission.test_results.map((result, index) => (
-                            <div
-                              key={result.testCaseId}
-                              className={`${styles.testResult} ${
-                                result.passed ? styles.passed : styles.failed
-                              }`}
+                          {submission.testResults.map((result, index) => (
+                            <div 
+                              key={result.testCaseId} 
+                              className={`${styles.testResult} ${result.passed ? styles.passed : styles.failed}`}
                             >
                               <div className={styles.testResultHeader}>
                                 <div className={styles.testResultTitle}>
                                   {result.passed ? (
-                                    <FaCheckCircle />
+                                    <FaCheckCircle className="text-green-400" />
                                   ) : (
-                                    <FaTimesCircle />
+                                    <FaTimesCircle className="text-red-400" />
                                   )}
-                                  Test Case {index + 1}
+                                  Test Case {index + 1} {result.isSample ? "(Sample)" : ""}
                                 </div>
                                 <div className={styles.testResultMeta}>
-                                  <span>{result.executionTime}ms</span>
-                                  <span>{result.memory}MB</span>
+                                  <span>Status: {result.passed ? "Passed" : "Failed"}</span>
                                 </div>
                               </div>
-
+                              
                               <div className={styles.testResultContent}>
                                 <div className={styles.testResultInput}>
                                   <strong>Input:</strong>
@@ -438,25 +472,31 @@ export default function ProblemPage() {
                                   <pre>{result.expectedOutput}</pre>
                                 </div>
                                 <div className={styles.testResultOutput}>
-                                  <strong>Actual:</strong>
+                                  <strong>Your Output:</strong>
                                   <pre>{result.actualOutput}</pre>
                                 </div>
                               </div>
                             </div>
                           ))}
                         </div>
+                        
+                        {submission.executionTime && (
+                          <div className={styles.executionMeta}>
+                            <span>Execution Time: {submission.executionTime}ms</span>
+                          </div>
+                        )}
+                        
+                        {submission.stderr && (
+                          <div className={styles.stderr}>
+                            <strong>Error Output:</strong>
+                            <pre>{submission.stderr}</pre>
+                          </div>
+                        )}
                       </div>
-                    ) : submission ? (
-                       <div className={styles.outputContainer}>
-                         <h3>Output</h3>
-                         <pre className={`${styles.outputContent} ${submission.stderr ? styles.errorOutput : ''}`}>
-                           {output}
-                         </pre>
-                       </div>
                     ) : !isRunning && (
                       <div className={styles.emptyOutput}>
                         <FaTerminal />
-                        <p>Run your code to see the output here</p>
+                        <p>Submit your code to see the test results here</p>
                       </div>
                     )}
                   </div>
@@ -474,32 +514,14 @@ export default function ProblemPage() {
                   onChange={(e) => handleLanguageChange(e.target.value)}
                   className={styles.languageSelect}
                 >
+                  <option value="cpp">C++</option>
                   <option value="javascript">JavaScript</option>
                   <option value="python">Python</option>
                   <option value="java">Java</option>
-                  <option value="cpp">C++</option>
                 </select>
               </div>
 
               <div className={styles.editorActions}>
-                <button
-                  className={styles.runButton}
-                  onClick={handleRunCode}
-                  disabled={isRunning}
-                >
-                  {isRunning ? (
-                    <>
-                      <div className={styles.spinner}></div>
-                      Running...
-                    </>
-                  ) : (
-                    <>
-                      <FaPlay />
-                      Run
-                    </>
-                  )}
-                </button>
-
                 <button
                   className={styles.submitButton}
                   onClick={handleSubmitCode}
@@ -530,6 +552,39 @@ export default function ProblemPage() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.successModal}>
+            <div className={styles.modalContent}>
+              <div className={styles.successIcon}>🎉</div>
+              <h2>Congratulations!</h2>
+              <p>Your solution has been accepted!</p>
+              <div className={styles.successStats}>
+                <div className={styles.stat}>
+                  <FaCheckCircle />
+                  <span>All test cases passed</span>
+                </div>
+                <div className={styles.stat}>
+                  <FaClock />
+                  <span>Execution time: {submission?.executionTime}ms</span>
+                </div>
+                <div className={styles.stat}>
+                  <FaCode />
+                  <span>Language: {selectedLanguage.toUpperCase()}</span>
+                </div>
+              </div>
+              <button
+                className={styles.modalButton}
+                onClick={() => setShowSuccessModal(false)}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
