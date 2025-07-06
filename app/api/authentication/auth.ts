@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:5001';
 
 export interface User {
     id: number;
@@ -43,7 +43,6 @@ export const signup = async (data: SignupRequest): Promise<void> => {
             throw new Error(errorData.message || "Sign Up Failed");
         }
 
-        // Don't return login response from signup, just verify success
         return await response.json();
     } catch (error) {
         console.error("Signup Error: " + error);

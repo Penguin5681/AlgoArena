@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api/code';
+const BASE_URL = 'http://localhost:5001/api/code';
 
 export type Language = 'cpp' | 'java' | 'javascript' | 'python';
 

@@ -1,0 +1,900 @@
+.pageBackground {
+  background-image: linear-gradient(rgba(10, 10, 20, 0.7), rgba(15, 15, 30, 0.8)), url("/background4.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  color: #e0e0e0;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 100px 20px 40px;
+}
+
+.descriptionContent p,
+.constraintsContent p {
+  margin: 0 0 10px 0;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.descriptionContent p:last-child,
+.constraintsContent p:last-child {
+  margin-bottom: 0;
+}
+
+.constraintsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.constraintMath {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  background: rgba(79, 70, 229, 0.1);
+  color: #a78bfa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.constraintItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.constraintItem:last-child {
+  border-bottom: none;
+}
+
+.constraintBullet {
+  color: #4f46e5;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.constraintText {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: 6px;
+  flex: 1;
+}
+
+.problemLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  height: calc(100vh - 140px);
+}
+
+.leftPanel {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.rightPanel {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.problemHeader {
+  padding: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.problemTitle {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.problemTitle h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.difficultyBadge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+}
+
+.problemMeta {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.topicTag {
+  background: rgba(79, 70, 229, 0.2);
+  color: #a78bfa;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.xpValue {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.problemContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tabNavigation {
+  display: flex;
+  padding: 0 25px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tabButton {
+  padding: 15px 20px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tabButton:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tabButton.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+}
+
+.tabContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 25px;
+}
+
+.descriptionTab {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.section {
+  margin-bottom: 25px;
+}
+
+.section h3 {
+  margin: 0 0 15px 0;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section h3::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(45deg, #4f46e5, #7c3aed);
+  border-radius: 2px;
+}
+
+.section p {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.complexityInfo {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.complexityItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 150px;
+}
+
+.complexityItem svg {
+  color: #4f46e5;
+  font-size: 1.1rem;
+}
+
+.hintsToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.hintsToggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.hintsContent {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.testStats {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.successRate {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.compilationOutput {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.outputContainer {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.stdout {
+  margin-bottom: 15px;
+}
+
+.stderr {
+  margin-bottom: 15px;
+}
+
+.stdout strong,
+.stderr strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.stdout pre {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.stderr pre {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.executionMeta {
+  display: flex;
+  gap: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Success Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.successModal {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 0;
+  max-width: 400px;
+  width: 90%;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalContent {
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.successIcon {
+  font-size: 4rem;
+  color: #f59e0b;
+  margin-bottom: 20px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.modalContent h2 {
+  font-size: 1.8rem;
+  margin: 0 0 10px 0;
+  background: linear-gradient(45deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modalContent p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  margin-bottom: 25px;
+}
+
+.successStats {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+}
+
+.stat svg {
+  color: #10b981;
+  font-size: 1.1rem;
+}
+
+.modalButton {
+  background: linear-gradient(45deg, #4f46e5, #7c3aed);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modalButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+}
+
+/* Enhanced Test Results */
+.testResultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.testResultsSummary {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .successModal {
+    margin: 20px;
+  }
+  
+  .modalContent {
+    padding: 30px 20px;
+  }
+  
+  .successIcon {
+    font-size: 3rem;
+  }
+  
+  .modalContent h2 {
+    font-size: 1.5rem;
+  }
+  
+  .successStats {
+    gap: 10px;
+  }
+}
+
+.hint {
+  padding: 12px 16px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.testCasesTab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.testCaseControls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #4f46e5;
+}
+
+.testCasesList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.testCase {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.testCase h4 {
+  margin: 0 0 15px 0;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.testCaseContent {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.testCaseInput,
+.testCaseOutput {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.testCaseInput strong,
+.testCaseOutput strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.testCaseInput pre,
+.testCaseOutput pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.outputTab {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.emptyOutput {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.emptyOutput svg {
+  font-size: 3rem;
+}
+
+.testResultsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.testResultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.testResultsHeader h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.testResultsSummary {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.testResultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.testResult {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.testResult.passed {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.testResult.failed {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.testResultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.testResultTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.testResultTitle svg {
+  font-size: 1.1rem;
+}
+
+.testResult.passed .testResultTitle svg {
+  color: #10b981;
+}
+
+.testResult.failed .testResultTitle svg {
+  color: #ef4444;
+}
+
+.testResultMeta {
+  display: flex;
+  gap: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+.testResultContent {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.testResultInput,
+.testResultOutput {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.testResultInput strong,
+.testResultOutput strong {
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.testResultInput pre,
+.testResultOutput pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.languageSelector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.languageSelect {
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.languageSelect:focus {
+  border-color: #4f46e5;
+}
+
+.editorActions {
+  display: flex;
+  gap: 15px;
+}
+
+.runButton,
+.submitButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.runButton {
+  background: rgba(79, 70, 229, 0.2);
+  color: #a78bfa;
+  border: 1px solid rgba(79, 70, 229, 0.3);
+}
+
+.runButton:hover:not(:disabled) {
+  background: rgba(79, 70, 229, 0.3);
+}
+
+.submitButton {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.submitButton:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.runButton:disabled,
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editorContainer {
+  flex: 1;
+  overflow: hidden;
+}
+
+.loadingContainer,
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  gap: 20px;
+}
+
+.loadingContainer p,
+.errorContainer p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+.errorContainer h2 {
+  color: #ef4444;
+  margin: 0;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #4f46e5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 1024px) {
+  .problemLayout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    height: auto;
+  }
+  
+  .leftPanel,
+  .rightPanel {
+    height: auto;
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 80px 10px 20px;
+  }
+  
+  .problemTitle {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .problemTitle h1 {
+    font-size: 1.5rem;
+  }
+  
+  .editorActions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .runButton,
+  .submitButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .constraintsContainer {
+    padding: 15px;
+  }
+  
+  .constraintItem {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .constraintBullet {
+    margin-top: 0;
+  }
+  
+  .constraintText {
+    font-size: 0.9rem;
+  }
+  
+  .complexityInfo {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .complexityItem {
+    min-width: auto;
+  }
+}

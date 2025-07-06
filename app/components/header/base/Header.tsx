@@ -209,11 +209,11 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
                     
                     <div className={styles.profileCardContent}>
                       <h3 className={styles.profileCardName}>{user.username}</h3>
-                      <p className={styles.profileCardTitle}>Full Stack Developer</p>
+                      <p className={styles.profileCardTitle}>Dev / CI-CD</p>
                       
                       <div className={styles.profileCardInfo}>
                         <div className={styles.profileCardLocation}>
-                          <span>📍 Pakistan</span>
+                          <span>📍 India</span>
                         </div>
                         
                         <div className={styles.profileCardStatus}>
@@ -228,7 +228,7 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
                         
                         <div className={styles.profileCardTeam}>
                           <span className={styles.teamLabel}>Team:</span>
-                          <span className={styles.teamValue}>Lana Rhoades Fan Club</span>
+                          <span className={styles.teamValue}>Club Penguin</span>
                         </div>
                       </div>
                       
