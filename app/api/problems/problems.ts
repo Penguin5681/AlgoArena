@@ -39,10 +39,10 @@ export interface ProblemWithTestCases extends Problem {
 export interface Topic {
   id: number;
   name: string;
-  problem_count: number;
-  easy_count: number;
-  medium_count: number;
-  hard_count: number;
+  problem_count: string; 
+  easy_count: string;    
+  medium_count: string;  
+  hard_count: string;    
 }
 
 export interface PaginationParams {
@@ -55,6 +55,7 @@ export interface PaginationParams {
 export interface ProblemFilters {
   difficulty?: 'easy' | 'medium' | 'hard';
   topic?: string;
+  solved?: 'solved' | 'unsolved'; 
 }
 
 export interface PaginationInfo {
@@ -206,7 +207,31 @@ export interface ProblemSolvedResponse {
   data: ProblemSolvedStatus;
 }
 
-// API Functions
+export interface SolvedProblem {
+  problem_id: string;
+  solved_at: string;
+  submission_id: number;
+  title: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  xp: number;
+}
+
+export interface DifficultyBreakdown {
+  easy: number;
+  medium: number;
+  hard: number;
+}
+
+export interface SolvedProblemsResponse {
+  success: boolean;
+  data: {
+    solvedProblems: SolvedProblem[];
+    totalSolved: number;
+    difficultyBreakdown: DifficultyBreakdown;
+  };
+}
+
+// API Functions/
 export async function getAllProblems(
   filters: ProblemFilters = {},
   pagination: PaginationParams = {}
@@ -319,7 +344,7 @@ export async function getProblemsByTopic(
 
 export async function getTopics(): Promise<TopicsResponse> {
   try {
-    const response = await fetch(`${BASE_URL}/api/seed/problems/topics`, {
+    const response = await fetch(`${BASE_URL}/api/seed/topics`, { // Changed endpoint
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -460,6 +485,34 @@ export async function getProblemSolvedStatus(problemId: string): Promise<Problem
   } catch (error) {
     console.error('Error fetching problem solved status:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch problem solved status');
+  }
+}
+
+export async function getSolvedProblems(): Promise<SolvedProblemsResponse> {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/xp/solved-problems`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching solved problems:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch solved problems');
   }
 }
 

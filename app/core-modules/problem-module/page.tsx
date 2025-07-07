@@ -6,8 +6,10 @@ import styles from "./problems.module.css";
 import {
   getAllProblems,
   getTopics,
+  getSolvedProblems,
   Problem,
   Topic,
+  SolvedProblem,
   ProblemFilters,
   PaginationParams,
   getProblemDifficultyColor,
@@ -27,9 +29,13 @@ import {
   FaSpotify,
   FaLinkedin,
   FaTwitter,
+  FaCheckCircle,
+  FaClock,
 } from "react-icons/fa";
 import { SiNetflix, SiTesla, SiUber } from "react-icons/si";
 import Link from "next/link";
+import { getUserData } from "@/app/api/authentication/auth";
+import { fetchUserXP } from "@/app/api/learn/learn";
 
 const companies = [
   { id: 1, name: "Google", icon: FaGoogle, color: "#4285F4" },
@@ -47,11 +53,10 @@ const companies = [
 ];
 
 export default function ProblemPage() {
-  const [activeTab, setActiveTab] = useState<"practice" | "company">(
-    "practice"
-  );
+  const [activeTab, setActiveTab] = useState<"practice" | "company">("practice");
   const [problems, setProblems] = useState<Problem[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [solvedProblems, setSolvedProblems] = useState<SolvedProblem[]>([]); // Changed to SolvedProblem[]
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,31 +64,78 @@ export default function ProblemPage() {
     "all" | "easy" | "medium" | "hard"
   >("all");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
+  const [selectedSolved, setSelectedSolved] = useState<"all" | "solved" | "unsolved">("all");
   const [showFilters, setShowFilters] = useState(false);
   const [currentOffset, setCurrentOffset] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
+  const [userXp, setUserXp] = useState(0);
+  const [topicsLoading, setTopicsLoading] = useState(false);
+  const [solvedLoading, setSolvedLoading] = useState(false);
 
-  // Load initial data
   useEffect(() => {
     loadTopics();
+    loadSolvedProblems();
     loadProblems(true);
+    getUserXp();
   }, []);
 
-  // Load more problems when filters change
   useEffect(() => {
     if (activeTab === "practice") {
       loadProblems(true);
     }
-  }, [selectedDifficulty, selectedTopic, activeTab]);
+  }, [selectedDifficulty, selectedTopic, selectedSolved, activeTab]);
 
   const loadTopics = async () => {
+    setTopicsLoading(true);
     try {
+      console.log("Loading topics from API...");
       const response = await getTopics();
+      console.log("Topics API response:", response);
+
       if (response.success) {
         setTopics(response.data.topics);
+        console.log("Topics loaded successfully:", response.data.topics);
+      } else {
+        console.error("Failed to load topics:", response);
       }
     } catch (error) {
       console.error("Error loading topics:", error);
+    } finally {
+      setTopicsLoading(false);
+    }
+  };
+
+  const loadSolvedProblems = async () => {
+    setSolvedLoading(true);
+    try {
+      console.log("Loading solved problems from API...");
+      const response = await getSolvedProblems();
+      console.log("Solved problems API response:", response);
+
+      if (response.success) {
+        setSolvedProblems(response.data.solvedProblems); // Now stores full SolvedProblem objects
+        console.log("Solved problems loaded successfully:", response.data.solvedProblems);
+      } else {
+        console.error("Failed to load solved problems:", response);
+      }
+    } catch (error) {
+      console.error("Error loading solved problems:", error);
+      // Don't throw error here as it's not critical for the page to work
+    } finally {
+      setSolvedLoading(false);
+    }
+  };
+
+  const getUserXp = async () => {
+    try {
+      const userData = await getUserData();
+      const userId = userData?.id;
+      if (userId) {
+        const userXpData = await fetchUserXP(userId);
+        setUserXp(userXpData.total_xp);
+      }
+    } catch (error) {
+      console.error("Error fetching user XP:", error);
     }
   };
 
@@ -98,6 +150,9 @@ export default function ProblemPage() {
       }
       if (selectedTopic) {
         filters.topic = selectedTopic;
+      }
+      if (selectedSolved !== "all") {
+        filters.solved = selectedSolved as "solved" | "unsolved";
       }
 
       const pagination: PaginationParams = {
@@ -143,19 +198,39 @@ export default function ProblemPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  const filteredProblems = problems.filter(
-    (problem) =>
+  // Create a set of solved problem IDs for efficient lookup
+  const solvedProblemIds = new Set(solvedProblems.map(solved => solved.problem_id));
+
+  // Enhanced filtering logic to include solved status
+  const filteredProblems = problems.filter((problem) => {
+    const matchesSearch = 
       problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      problem.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      problem.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesSolved = selectedSolved === "all" || 
+      (selectedSolved === "solved" && solvedProblemIds.has(problem.id)) ||
+      (selectedSolved === "unsolved" && !solvedProblemIds.has(problem.id));
+    
+    return matchesSearch && matchesSolved;
+  });
 
   const handleCompanySelect = (companyId: number) => {
     setSelectedCompany(companyId);
   };
 
+  // Helper function to check if a problem is solved
+  const isProblemSolved = (problemId: string) => {
+    return solvedProblemIds.has(problemId);
+  };
+
+  // Helper function to get solved problem details
+  const getSolvedProblemDetails = (problemId: string) => {
+    return solvedProblems.find(solved => solved.problem_id === problemId);
+  };
+
   return (
     <div className={styles.pageBackground}>
-      <Header />
+      <Header userXP={userXp} />
 
       <div className={styles.container}>
         {/* Header Section */}
@@ -242,14 +317,43 @@ export default function ProblemPage() {
                 value={selectedTopic}
                 onChange={(e) => setSelectedTopic(e.target.value)}
                 className={styles.filterSelect}
+                disabled={topicsLoading}
               >
-                <option value="">All Topics</option>
+                <option value="">
+                  {topicsLoading ? "Loading topics..." : "All Topics"}
+                </option>
                 {topics.map((topic) => (
                   <option key={topic.id} value={topic.name}>
-                    {topic.name} ({topic.problem_count})
+                    {topic.name} ({topic.problem_count} problems)
                   </option>
                 ))}
               </select>
+              {topicsLoading && (
+                <div className={styles.loadingSpinner}>
+                  <div className={styles.spinner}></div>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Status</label>
+              <select
+                value={selectedSolved}
+                onChange={(e) => setSelectedSolved(e.target.value as any)}
+                className={styles.filterSelect}
+                disabled={solvedLoading}
+              >
+                <option value="all">
+                  {solvedLoading ? "Loading status..." : "All Problems"}
+                </option>
+                <option value="solved">✅ Solved ({solvedProblems.length})</option>
+                <option value="unsolved">⏳ Unsolved</option>
+              </select>
+              {solvedLoading && (
+                <div className={styles.loadingSpinner}>
+                  <div className={styles.spinner}></div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -258,48 +362,70 @@ export default function ProblemPage() {
           {activeTab === "practice" ? (
             <>
               <div className={styles.problemsList}>
-                {filteredProblems.map((problem, index) => (
-                  <Link
-                    key={problem.id}
-                    href={`/problems/${problem.id}`}
-                    className={styles.problemCard}
-                  >
-                    <div className={styles.problemHeader}>
-                      <div className={styles.problemTitle}>
-                        <span className={styles.problemNumber}>
-                          #{index + 1}
-                        </span>
-                        <h3>{problem.title}</h3>
+                {filteredProblems.map((problem, index) => {
+                  const solvedDetails = getSolvedProblemDetails(problem.id);
+                  return (
+                    <Link
+                      key={problem.id}
+                      href={`/problems/${problem.id}`}
+                      className={styles.problemCard}
+                    >
+                      <div className={styles.problemHeader}>
+                        <div className={styles.problemTitle}>
+                          <span className={styles.problemNumber}>
+                            #{index + 1}
+                          </span>
+                          <h3>{problem.title}</h3>
+                          {/* Add solved indicator */}
+                          {isProblemSolved(problem.id) && (
+                            <FaCheckCircle className={styles.solvedIcon} />
+                          )}
+                        </div>
+                        <div className={styles.problemBadges}>
+                          <div
+                            className={styles.difficultyBadge}
+                            style={{
+                              backgroundColor: getProblemDifficultyColor(
+                                problem.difficulty
+                              ),
+                            }}
+                          >
+                            {problem.difficulty}
+                          </div>
+                          {/* Add solved status badge with more details */}
+                          {isProblemSolved(problem.id) && solvedDetails && (
+                            <div className={styles.solvedBadge}>
+                              <FaCheckCircle />
+                              <span>Solved</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div
-                        className={styles.difficultyBadge}
-                        style={{
-                          backgroundColor: getProblemDifficultyColor(
-                            problem.difficulty
-                          ),
-                        }}
-                      >
-                        {problem.difficulty}
-                      </div>
-                    </div>
 
-                    <p className={styles.problemDescription}>
-                      {problem.description.length > 150
-                        ? `${problem.description.substring(0, 150)}...`
-                        : problem.description}
-                    </p>
+                      <p className={styles.problemDescription}>
+                        {problem.description.length > 150
+                          ? `${problem.description.substring(0, 150)}...`
+                          : problem.description}
+                      </p>
 
-                    <div className={styles.problemFooter}>
-                      <div className={styles.problemMeta}>
-                        <span className={styles.topicTag}>{problem.topic}</span>
-                        <span className={styles.xpValue}>+{problem.xp} XP</span>
+                      <div className={styles.problemFooter}>
+                        <div className={styles.problemMeta}>
+                          <span className={styles.topicTag}>{problem.topic}</span>
+                          <span className={styles.xpValue}>+{problem.xp} XP</span>
+                          {/* Show solved date if available */}
+                          {solvedDetails && (
+                            <span className={styles.solvedDate}>
+                              Solved: {new Date(solvedDetails.solved_at).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.testCaseCount}>
+                          {problem.test_case_count} test cases
+                        </div>
                       </div>
-                      <div className={styles.testCaseCount}>
-                        {problem.test_case_count} test cases
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
 
               {loading && (
