@@ -950,7 +950,6 @@ export default function LearnPage() {
         await loadData();
         setIsLoading(false);
       } else if (!isAuthLoading) {
-        // If auth is done and there's no user, stop loading.
         setIsLoading(false);
       }
     };

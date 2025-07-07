@@ -9,8 +9,10 @@ import {
   submitRawCodeForProblem,
   getRawSubmissionResult,
   getProblemDifficultyColor,
+  getProblemSolvedStatus,
   ProblemWithTestCases,
   RawSubmissionResult,
+  ProblemSolvedStatus,
 } from "@/app/api/problems/problems";
 import {
   FaPlay,
@@ -24,7 +26,11 @@ import {
   FaTerminal,
   FaCheckCircle,
   FaTimesCircle,
+  FaTrophy,
+  FaStar,
 } from "react-icons/fa";
+import { fetchUserXP } from "@/app/api/learn/learn";
+import { getUserData } from "@/app/api/authentication/auth";
 
 const languageTemplates = {
   cpp: `#include <iostream>
@@ -32,11 +38,11 @@ const languageTemplates = {
 using namespace std;
 
 int main() {
-    // Your solution here
     
+    // your solution goes here
     return 0;
 }`,
-  javascript: `// Read input
+  javascript: `
 const readline = require('readline');
 const rl = readline.createInterface({
     input: process.stdin,
@@ -44,7 +50,8 @@ const rl = readline.createInterface({
 });
 
 rl.on('line', (line) => {
-    // Your solution here
+    // your solution goes here
+    
     console.log(line);
     rl.close();
 });`,
@@ -59,7 +66,8 @@ for line in sys.stdin:
 public class Solution {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        // Your solution here
+    // your solution goes here
+        
         
         scanner.close();
     }
@@ -69,12 +77,18 @@ public class Solution {
 export default function ProblemPage() {
   const params = useParams();
   const [problem, setProblem] = useState<ProblemWithTestCases | null>(null);
+  const [solvedStatus, setSolvedStatus] = useState<ProblemSolvedStatus | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
+  const [solvedStatusLoading, setSolvedStatusLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("cpp");
   const [code, setCode] = useState(languageTemplates.cpp);
   const [isRunning, setIsRunning] = useState(false);
-  const [submission, setSubmission] = useState<RawSubmissionResult | null>(null);
+  const [submission, setSubmission] = useState<RawSubmissionResult | null>(
+    null
+  );
   const [showHints, setShowHints] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "description" | "testcases" | "output"
@@ -82,12 +96,14 @@ export default function ProblemPage() {
   const [showSampleOnly, setShowSampleOnly] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const [userXp, setUserXp] = useState(0);
 
   useEffect(() => {
     const problemId = params.id;
     if (problemId) {
       console.log("Loading problem with ID:", problemId);
       loadProblem(problemId as string);
+      loadProblemSolvedStatus(problemId as string);
     }
     return () => {
       if (pollingRef.current) {
@@ -95,6 +111,10 @@ export default function ProblemPage() {
       }
     };
   }, [params.id]);
+
+  useEffect(() => {
+    getUserXp();
+  }, []);
 
   const loadProblem = async (id: string) => {
     setLoading(true);
@@ -114,6 +134,20 @@ export default function ProblemPage() {
     }
   };
 
+  const loadProblemSolvedStatus = async (problemId: string) => {
+    setSolvedStatusLoading(true);
+    try {
+      const response = await getProblemSolvedStatus(problemId);
+      if (response.success) {
+        setSolvedStatus(response.data);
+      }
+    } catch (err) {
+      console.warn("Failed to load solved status:", err);
+    } finally {
+      setSolvedStatusLoading(false);
+    }
+  };
+
   const handleLanguageChange = (language: string) => {
     setSelectedLanguage(language);
     setCode(languageTemplates[language as keyof typeof languageTemplates]);
@@ -127,22 +161,30 @@ export default function ProblemPage() {
     pollingRef.current = setInterval(async () => {
       try {
         const result = await getRawSubmissionResult(submissionId);
-        if (result.success && result.data.status !== 'pending') {
+        if (result.success && result.data.status !== "pending") {
           if (pollingRef.current) clearInterval(pollingRef.current);
           setSubmission(result.data);
           setIsRunning(false);
-          
-          // Show success modal if all tests passed
-          if (result.data.status === 'success' && result.data.testsPassed === result.data.totalTests) {
+
+          if (
+            result.data.status === "success" &&
+            result.data.testsPassed === result.data.totalTests
+          ) {
             setShowSuccessModal(true);
+
+            if (params.id) {
+              loadProblemSolvedStatus(params.id as string);
+            }
           }
         }
       } catch (err) {
         if (pollingRef.current) clearInterval(pollingRef.current);
-        setError(err instanceof Error ? err.message : "Failed to get submission status");
+        setError(
+          err instanceof Error ? err.message : "Failed to get submission status"
+        );
         setIsRunning(false);
       }
-    }, 2000);
+    }, 500);
   };
 
   const handleSubmitCode = async () => {
@@ -154,9 +196,9 @@ export default function ProblemPage() {
     setError(null);
 
     try {
-      const payload = { 
-        language: selectedLanguage, 
-        code 
+      const payload = {
+        language: selectedLanguage,
+        code,
       };
       const response = await submitRawCodeForProblem(problem.id, payload);
       if (response.success) {
@@ -166,7 +208,11 @@ export default function ProblemPage() {
         setIsRunning(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred during submission.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred during submission."
+      );
       setIsRunning(false);
     }
   };
@@ -184,13 +230,13 @@ export default function ProblemPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'success':
+      case "success":
         return <FaCheckCircle className="text-green-400" />;
-      case 'runtime_error':
-      case 'compile_error':
-      case 'wrong_answer':
+      case "runtime_error":
+      case "compile_error":
+      case "wrong_answer":
         return <FaTimesCircle className="text-red-400" />;
-      case 'time_limit_exceeded':
+      case "time_limit_exceeded":
         return <FaClock className="text-yellow-400" />;
       default:
         return <FaTerminal className="text-blue-400" />;
@@ -199,40 +245,64 @@ export default function ProblemPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success':
-        return 'text-green-400';
-      case 'runtime_error':
-      case 'compile_error':
-      case 'wrong_answer':
-        return 'text-red-400';
-      case 'time_limit_exceeded':
-        return 'text-yellow-400';
+      case "success":
+        return "text-green-400";
+      case "runtime_error":
+      case "compile_error":
+      case "wrong_answer":
+        return "text-red-400";
+      case "time_limit_exceeded":
+        return "text-yellow-400";
       default:
-        return 'text-blue-400';
+        return "text-blue-400";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'success':
-        return 'Accepted';
-      case 'runtime_error':
-        return 'Runtime Error';
-      case 'compile_error':
-        return 'Compile Error';
-      case 'wrong_answer':
-        return 'Wrong Answer';
-      case 'time_limit_exceeded':
-        return 'Time Limit Exceeded';
+      case "success":
+        return "Accepted";
+      case "runtime_error":
+        return "Runtime Error";
+      case "compile_error":
+        return "Compile Error";
+      case "wrong_answer":
+        return "Wrong Answer";
+      case "time_limit_exceeded":
+        return "Time Limit Exceeded";
       default:
         return status;
     }
   };
 
+  const getUserXp = async () => {
+    try {
+      const userData = await getUserData();
+      const userId = userData?.id;
+      if (userId) {
+        const userXpData = await fetchUserXP(userId);
+        setUserXp(userXpData.total_xp);
+      }
+    } catch (error) {
+      console.error("Error fetching user XP:", error);
+    }
+  };
+
+  const formatSolvedDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   if (loading) {
     return (
       <div className={styles.pageBackground}>
-        <Header />
+        <Header userXP={userXp} />
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
           <p>Loading problem...</p>
@@ -244,7 +314,7 @@ export default function ProblemPage() {
   if (error || !problem) {
     return (
       <div className={styles.pageBackground}>
-        <Header />
+        <Header userXP={userXp} />
         <div className={styles.errorContainer}>
           <h2>Problem Not Found</h2>
           <p>{error || "The requested problem could not be found."}</p>
@@ -255,7 +325,7 @@ export default function ProblemPage() {
 
   return (
     <div className={styles.pageBackground}>
-      <Header />
+      <Header userXP={userXp} />
 
       <div className={styles.container}>
         <div className={styles.problemLayout}>
@@ -264,22 +334,81 @@ export default function ProblemPage() {
             <div className={styles.problemHeader}>
               <div className={styles.problemTitle}>
                 <h1>{problem.title}</h1>
-                <div
-                  className={styles.difficultyBadge}
-                  style={{
-                    backgroundColor: getProblemDifficultyColor(
-                      problem.difficulty
-                    ),
-                  }}
-                >
-                  {problem.difficulty}
+                <div className={styles.problemBadges}>
+                  <div
+                    className={styles.difficultyBadge}
+                    style={{
+                      backgroundColor: getProblemDifficultyColor(
+                        problem.difficulty
+                      ),
+                    }}
+                  >
+                    {problem.difficulty}
+                  </div>
+
+                  {/* Solved Status Badge */}
+                  {!solvedStatusLoading && solvedStatus && (
+                    <div
+                      className={`${styles.solvedBadge} ${
+                        solvedStatus.isSolved ? styles.solved : styles.notSolved
+                      }`}
+                    >
+                      {solvedStatus.isSolved ? (
+                        <>
+                          <FaCheckCircle />
+                          <span>Solved</span>
+                        </>
+                      ) : (
+                        <>
+                          <FaClock />
+                          <span>Not Solved</span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
+
               <div className={styles.problemMeta}>
                 <span className={styles.topicTag}>{problem.topic}</span>
                 <span className={styles.xpValue}>+{problem.xp} XP</span>
+
+                {/* Solved Details */}
+                {solvedStatus?.isSolved && solvedStatus.solvedDetails && (
+                  <div className={styles.solvedDetails}>
+                    <FaTrophy className={styles.trophyIcon} />
+                    <span>
+                      Solved on{" "}
+                      {formatSolvedDate(solvedStatus.solvedDetails.solved_at)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Solved Status Card */}
+            {solvedStatus?.isSolved && solvedStatus.solvedDetails && (
+              <div className={styles.solvedStatusCard}>
+                <div className={styles.solvedStatusHeader}>
+                  <FaStar className={styles.starIcon} />
+                  <h3>Problem Solved!</h3>
+                </div>
+                <div className={styles.solvedStatusDetails}>
+                  <div className={styles.solvedStatusItem}>
+                    <strong>Solved At:</strong>{" "}
+                    {formatSolvedDate(solvedStatus.solvedDetails.solved_at)}
+                  </div>
+                  <div className={styles.solvedStatusItem}>
+                    <strong>Submission ID:</strong>{" "}
+                    {solvedStatus.solvedDetails.submission_id}
+                  </div>
+                  <div className={styles.solvedStatusItem}>
+                    <strong>XP Earned:</strong> +{solvedStatus.solvedDetails.xp}{" "}
+                    XP
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className={styles.problemContent}>
               <div className={styles.tabNavigation}>
@@ -422,31 +551,38 @@ export default function ProblemPage() {
                 {activeTab === "output" && (
                   <div className={styles.outputTab}>
                     {isRunning && !submission && (
-                       <div className={styles.emptyOutput}>
-                         <div className={styles.spinner}></div>
-                         <p>Testing your solution...</p>
-                       </div>
+                      <div className={styles.emptyOutput}>
+                        <div className={styles.spinner}></div>
+                        <p>Testing your solution...</p>
+                      </div>
                     )}
                     {submission && submission.testResults ? (
                       <div className={styles.testResultsContainer}>
                         <div className={styles.testResultsHeader}>
                           <h3>
-                            Test Results: 
-                            <span className={`${styles.status} ${getStatusColor(submission.status)}`}>
+                            Test Results:
+                            <span
+                              className={`${styles.status} ${getStatusColor(
+                                submission.status
+                              )}`}
+                            >
                               {getStatusIcon(submission.status)}
                               {getStatusText(submission.status)}
                             </span>
                           </h3>
                           <div className={styles.testResultsSummary}>
-                            {submission.testsPassed} / {submission.totalTests} passed
+                            {submission.testsPassed} / {submission.totalTests}{" "}
+                            passed
                           </div>
                         </div>
 
                         <div className={styles.testResultsList}>
                           {submission.testResults.map((result, index) => (
-                            <div 
-                              key={result.testCaseId} 
-                              className={`${styles.testResult} ${result.passed ? styles.passed : styles.failed}`}
+                            <div
+                              key={result.testCaseId}
+                              className={`${styles.testResult} ${
+                                result.passed ? styles.passed : styles.failed
+                              }`}
                             >
                               <div className={styles.testResultHeader}>
                                 <div className={styles.testResultTitle}>
@@ -455,13 +591,17 @@ export default function ProblemPage() {
                                   ) : (
                                     <FaTimesCircle className="text-red-400" />
                                   )}
-                                  Test Case {index + 1} {result.isSample ? "(Sample)" : ""}
+                                  Test Case {index + 1}{" "}
+                                  {result.isSample ? "(Sample)" : ""}
                                 </div>
                                 <div className={styles.testResultMeta}>
-                                  <span>Status: {result.passed ? "Passed" : "Failed"}</span>
+                                  <span>
+                                    Status:{" "}
+                                    {result.passed ? "Passed" : "Failed"}
+                                  </span>
                                 </div>
                               </div>
-                              
+
                               <div className={styles.testResultContent}>
                                 <div className={styles.testResultInput}>
                                   <strong>Input:</strong>
@@ -479,13 +619,15 @@ export default function ProblemPage() {
                             </div>
                           ))}
                         </div>
-                        
+
                         {submission.executionTime && (
                           <div className={styles.executionMeta}>
-                            <span>Execution Time: {submission.executionTime}ms</span>
+                            <span>
+                              Execution Time: {submission.executionTime}ms
+                            </span>
                           </div>
                         )}
-                        
+
                         {submission.stderr && (
                           <div className={styles.stderr}>
                             <strong>Error Output:</strong>
@@ -493,11 +635,13 @@ export default function ProblemPage() {
                           </div>
                         )}
                       </div>
-                    ) : !isRunning && (
-                      <div className={styles.emptyOutput}>
-                        <FaTerminal />
-                        <p>Submit your code to see the test results here</p>
-                      </div>
+                    ) : (
+                      !isRunning && (
+                        <div className={styles.emptyOutput}>
+                          <FaTerminal />
+                          <p>Submit your code to see the test results here</p>
+                        </div>
+                      )
                     )}
                   </div>
                 )}
@@ -523,7 +667,9 @@ export default function ProblemPage() {
 
               <div className={styles.editorActions}>
                 <button
-                  className={styles.submitButton}
+                  className={`${styles.submitButton} ${
+                    solvedStatus?.isSolved ? styles.alreadySolved : ""
+                  }`}
                   onClick={handleSubmitCode}
                   disabled={isRunning}
                 >
@@ -535,7 +681,7 @@ export default function ProblemPage() {
                   ) : (
                     <>
                       <FaCheck />
-                      Submit
+                      {solvedStatus?.isSolved ? "Submit Again" : "Submit"}
                     </>
                   )}
                 </button>
@@ -573,6 +719,10 @@ export default function ProblemPage() {
                 <div className={styles.stat}>
                   <FaCode />
                   <span>Language: {selectedLanguage.toUpperCase()}</span>
+                </div>
+                <div className={styles.stat}>
+                  <FaTrophy />
+                  <span>+{problem.xp} XP earned</span>
                 </div>
               </div>
               <button

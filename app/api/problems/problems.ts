@@ -7,7 +7,7 @@ const BASE_URL = 'http://localhost:5001';
 const CODE_EXECUTION_URL = `${BASE_URL}/api/code-execution`;
 
 export interface Problem {
-  id: string; // Changed from number to string
+  id: string; 
   title: string;
   description: string;
   constraints: string;
@@ -185,6 +185,25 @@ export interface RawSubmissionResult {
 export interface RawSubmissionResultResponse {
   success: boolean;
   data: RawSubmissionResult;
+}
+
+export interface SolvedDetails {
+  solved_at: string;
+  submission_id: number;
+  title: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  xp: number;
+}
+
+export interface ProblemSolvedStatus {
+  problemId: string;
+  isSolved: boolean;
+  solvedDetails: SolvedDetails | null;
+}
+
+export interface ProblemSolvedResponse {
+  success: boolean;
+  data: ProblemSolvedStatus;
 }
 
 // API Functions
@@ -413,6 +432,34 @@ export async function getRawSubmissionResult(submissionId: number): Promise<RawS
   } catch (error) {
     console.error('Error fetching raw submission result:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch submission result');
+  }
+}
+
+export async function getProblemSolvedStatus(problemId: string): Promise<ProblemSolvedResponse> {
+  const token = getAuthToken();
+  
+  if (!token) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    const response = await fetch(`${BASE_URL}/api/xp/problem/${problemId}/solved`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching problem solved status:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch problem solved status');
   }
 }
 

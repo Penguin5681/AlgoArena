@@ -898,3 +898,147 @@
     min-width: auto;
   }
 }
+
+.problemBadges {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.solvedBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.solvedBadge.solved {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.solvedBadge.notSolved {
+  background: linear-gradient(135deg, #64748b, #475569);
+  color: white;
+  box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
+}
+
+.solvedDetails {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #10b981;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.trophyIcon {
+  color: #f59e0b;
+  font-size: 1rem;
+}
+
+.solvedStatusCard {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.4s ease-out;
+}
+
+.solvedStatusHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.starIcon {
+  color: #f59e0b;
+  font-size: 1.5rem;
+}
+
+.solvedStatusHeader h3 {
+  color: #10b981;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.solvedStatusDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.solvedStatusItem {
+  color: #e2e8f0;
+  font-size: 0.9rem;
+}
+
+.solvedStatusItem strong {
+  color: #10b981;
+  margin-right: 0.5rem;
+}
+
+.submitButton.alreadySolved {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.submitButton.alreadySolved:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .problemBadges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .solvedDetails {
+    font-size: 0.8rem;
+  }
+  
+  .solvedStatusCard {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .solvedStatusDetails {
+    gap: 0.4rem;
+  }
+}
