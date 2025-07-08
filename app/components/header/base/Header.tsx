@@ -31,7 +31,6 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
     setShowProfileCard(!showProfileCard);
   };
 
-  // Handle click outside to close profile card
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showProfileCard && 
@@ -49,7 +48,6 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
     };
   }, [showProfileCard]);
 
-  // Handle ESC key to close profile card
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && showProfileCard) {
@@ -78,7 +76,10 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check if user has a team
+  useEffect(() => {
+    console.log("USER PFP => " + user?.profile_picture);
+  });
+
   useEffect(() => {
     const checkTeamStatus = async () => {
       try {
@@ -165,9 +166,9 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
                   )}
                   <span className={styles.username}>{user.username}</span>
                   <div className={styles.avatar}>
-                    {user.profilePicture ? (
+                    {user.profile_picture ? (
                       <Image
-                        src={user.profilePicture} 
+                        src={user.profile_picture} 
                         alt="Profile" 
                         width={32} 
                         height={32} 
@@ -186,9 +187,9 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
                   <div className={styles.profileCard} ref={profileCardRef}>
                     <div className={styles.profileCardImageSection}>
                       <div className={styles.profileCardAvatar}>
-                        {user.profilePicture ? (
+                        {user.profile_picture ? (
                           <Image
-                            src={user.profilePicture} 
+                            src={user.profile_picture} 
                             alt="Profile" 
                             width={120} 
                             height={120} 

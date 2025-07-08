@@ -8,7 +8,7 @@ export interface User {
     id: number;
     username: string;
     email: string;
-    profilePicture: string;
+    profile_picture: string;
 }
 
 export interface LoginResponse {
@@ -102,7 +102,6 @@ export const saveUserData = (user: User): void => {
 export const getUserData = (): User | null => {
     if (typeof window !== 'undefined') {
         const userData = localStorage.getItem('user_data');
-        // Check if userData is null, undefined, or the string "undefined"
         if (!userData || userData === 'undefined' || userData === 'null') {
             return null;
         }
@@ -110,7 +109,6 @@ export const getUserData = (): User | null => {
             return JSON.parse(userData);
         } catch (error) {
             console.error('Error parsing user data:', error);
-            // Clear invalid data
             localStorage.removeItem('user_data');
             return null;
         }
@@ -119,7 +117,7 @@ export const getUserData = (): User | null => {
 };
 
 export const isAuthenticated = (): boolean => {
-    return getAuthToken() !== null; // Fixed: was missing () on getAuthToken
+    return getAuthToken() !== null; 
 };
 
 export const logout = (): void => {

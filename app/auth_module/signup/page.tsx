@@ -130,12 +130,10 @@ export default function SignUpPage() {
   };
 
   const handleSignUp = async () => {
-    // Validate form
     if (!validateCredentials()) {
       return;
     }
 
-    // Check if username and email are available
     if (usernameStatus.isValid !== true || emailStatus.isValid !== true) {
       setFormErrors({
         general:
@@ -148,7 +146,6 @@ export default function SignUpPage() {
     setFormErrors({});
 
     try {
-      // Sign up the user
       let profilePicture = "";
       await signup({
         username,
@@ -157,14 +154,7 @@ export default function SignUpPage() {
         profilePicture
       });
 
-      // Redirect to login page with credentials
-      const params = new URLSearchParams({
-        email: email,
-        password: password,
-        signup_success: "true",
-      });
-
-      router.push(`/auth_module/login?${params.toString()}`);
+      router.push(`/auth_module/profile-setup?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
     } catch (error) {
       setFormErrors({
         general:
