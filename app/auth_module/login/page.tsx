@@ -7,12 +7,14 @@ import { useState, useEffect } from "react";
 import GradientButton from "@/app/components/buttons/base/GradientButton";
 import GoogleButton from "@/app/components/buttons/base/GoogleButton";
 import {
+  getUserData,
   login,
   saveAuthToken,
   saveUserData,
 } from "@/app/api/authentication/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithGoogle } from "@/app/api/authentication/google-auth";
+import { getUserProfile, UserProfileDataResponse } from "@/app/api/user/user";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +23,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [userApiData, setUserApiData] =
+    useState<UserProfileDataResponse | null>(null);
 
   const [formErrors, setFormErrors] = useState<{
     identifier?: string;
@@ -78,7 +82,7 @@ export default function LoginPage() {
       saveAuthToken(response.token);
       saveUserData(response.user);
 
-      window.location.href = '/dashboard';
+      window.location.href = "/dashboard";
     } catch (error) {
       setFormErrors({
         general:
@@ -89,6 +93,14 @@ export default function LoginPage() {
       setSignupSuccess(false);
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const getUserData = async () => {
+    const data = await getUserProfile();
+    if (data) {
+      setUserApiData(data);
+      localStorage.setItem("user_profile_data", JSON.stringify(data));
     }
   };
 
@@ -108,8 +120,9 @@ export default function LoginPage() {
 
       saveAuthToken(response.token);
       saveUserData(response.user);
+      await getUserData();
 
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (error) {
       setFormErrors({
         general:
@@ -209,7 +222,7 @@ export default function LoginPage() {
 
         <div style={{ marginBottom: "20px" }} />
 
-        <GoogleButton onClick={handleGoogleSignIn} disabled={isLoggingIn}/>
+        <GoogleButton onClick={handleGoogleSignIn} disabled={isLoggingIn} />
 
         <div className={styles.signInTextWrapper}>
           <span>Don't have an account? &nbsp;</span>

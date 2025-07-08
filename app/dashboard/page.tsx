@@ -15,7 +15,7 @@ export default function DashboardScreen() {
       router.push("/auth_module/login");
     }
   }, [isAuthenticated, isLoading, router]);
-
+  
   const handleLogout = () => {
     logout();
     router.push("/");

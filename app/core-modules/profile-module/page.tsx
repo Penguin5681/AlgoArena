@@ -1,26 +1,151 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./profile.module.css";
 import Header from "@/app/components/header/base/Header";
-import { FaFacebookF, FaLinkedinIn, FaGithub } from "react-icons/fa";
+import { FaFacebookF, FaLinkedinIn, FaGithub, FaPen } from "react-icons/fa";
+import { getUserProfile, UserProfileDataResponse } from "@/app/api/user/user";
+import { fetchUserXP } from "@/app/api/learn/learn";
+import { useAuth } from "@/app/context/AuthContext";
+import GradientButton from "@/app/components/buttons/base/GradientButton";
+import EditProfileModal from "@/app/components/modal/base/EditProfileModal";
+
+const getBadgeInfo = (badge: string) => {
+  const tier = badge.replace(/^T/, "");
+  const badgeConfigs = {
+    T5: {
+      name: "Recruit",
+      color: "#808080",
+      xpRange: "0 - 500 XP",
+      glowColor: "rgba(128, 128, 128, 0.5)",
+      animationDelay: "0s",
+    },
+    T4: {
+      name: "Journeyman",
+      color: "#DAA520",
+      xpRange: "501 - 1100 XP",
+      glowColor: "rgba(218, 165, 32, 0.5)",
+      animationDelay: "0.2s",
+    },
+    T3: {
+      name: "Sentinel",
+      color: "#2E8B57",
+      xpRange: "1101 - 2000 XP",
+      glowColor: "rgba(46, 139, 87, 0.5)",
+      animationDelay: "0.4s",
+    },
+    T2: {
+      name: "Mythic",
+      color: "#DC143C",
+      xpRange: "2001 - 2700 XP",
+      glowColor: "rgba(220, 20, 60, 0.5)",
+      animationDelay: "0.6s",
+    },
+    T1: {
+      name: "Eternal",
+      color: "#00BFFF",
+      xpRange: "2701+ XP",
+      glowColor: "rgba(0, 191, 255, 0.5)",
+      animationDelay: "0.8s",
+    },
+  };
+
+  return badgeConfigs[badge as keyof typeof badgeConfigs] || badgeConfigs["T5"];
+};
+
+const getBadgesToDisplay = (userBadges: string[]) => {
+  if (!userBadges || userBadges.length === 0) return [];
+
+  const highestBadge = userBadges.reduce((highest, current) => {
+    const currentTier = parseInt(current.replace("T", ""));
+    const highestTier = parseInt(highest.replace("T", ""));
+    return currentTier < highestTier ? current : highest;
+  });
+
+  const highestTier = parseInt(highestBadge.replace("T", ""));
+  const badgesToShow = [];
+
+  for (let i = highestTier; i <= 5; i++) {
+    badgesToShow.push(`T${i}`);
+  }
+
+  return badgesToShow;
+};
+
+const isBadgeEarned = (badge: string, userBadges: string[]) => {
+  if (!userBadges || userBadges.length === 0) return false;
+
+  const highestTier = Math.min(
+    ...userBadges.map((b) => parseInt(b.replace("T", "")))
+  );
+  const checkingTier = parseInt(badge.replace("T", ""));
+
+  return checkingTier >= highestTier;
+};
 
 const ProfilePage = () => {
+  const { user, logout } = useAuth();
+  const [userXp, setUserXp] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const loadUserXpData = async () => {
+    const [userXp] = await Promise.all([fetchUserXP(user?.id)]);
+    setUserXp(userXp.total_xp);
+  };
+
+  useEffect(() => {
+    loadUserXpData();
+  });
+
   const generateHeatmapData = () => {
     const data = [];
     for (let i = 0; i < 365; i++) {
-      const level = Math.floor(Math.random() * 5); // 0-4 levels
+      const level = Math.floor(Math.random() * 5);
       data.push(level);
     }
     return data;
   };
+  const getUserData = async () => {
+    const data = await getUserProfile();
+    if (data) {
+      localStorage.setItem("user_profile_data", JSON.stringify(data));
+    }
+  };
 
   const heatmapData = generateHeatmapData();
+  const [userData, setUserData] = useState<UserProfileDataResponse | null>(
+    null
+  );
+
+  const loadUserData = async () => {
+    const userDataString = await localStorage.getItem("user_profile_data");
+    if (userDataString) {
+      const parsedData: UserProfileDataResponse = JSON.parse(userDataString);
+      setUserData(parsedData);
+      console.warn(parsedData);
+    }
+  };
+
+  const handleProfileUpdate = async () => {
+    await getUserData();
+    await loadUserData();
+  };
+
+  useEffect(() => {
+    getUserData();
+    loadUserData();
+  }, []);
 
   return (
     <>
+      <EditProfileModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        userData={userData}
+        onProfileUpdate={handleProfileUpdate}
+      />
       <div style={{ paddingBottom: 50 }}>
-        <Header />
+        <Header userXP={userXp} />
       </div>
       <div className={styles.pageBackground}>
         <div className={styles.profileContainer}>
@@ -28,48 +153,142 @@ const ProfilePage = () => {
           <div className={styles.profileHeader}>
             <div className={styles.profileImageSection}>
               <img
-                src="/panda.jpg"
+                src={userData?.profile_picture}
                 alt="Profile"
                 className={styles.profileImage}
               />
               <div className={styles.socialLinks}>
-                <a href="#" className={styles.socialLink} title="Facebook">
-                  <FaFacebookF />
+                <a
+                  href={userData?.github_link || "#"}
+                  className={styles.socialLink}
+                  title="GitHub"
+                >
+                  <FaGithub />
                 </a>
-                <a href="#" className={styles.socialLink} title="LinkedIn">
+                <a
+                  href={userData?.linkedin_link || "#"}
+                  className={styles.socialLink}
+                  title="LinkedIn"
+                >
                   <FaLinkedinIn />
                 </a>
-                <a href="#" className={styles.socialLink} title="GitHub">
-                  <FaGithub />
+                <a
+                  href={userData?.facebook_link || "#"}
+                  className={styles.socialLink}
+                  title="Facebook"
+                >
+                  <FaFacebookF />
                 </a>
               </div>
               <div className={styles.contactInfo}>
                 <strong>Contact me at:</strong>
                 <br />
-                abc@example.com
+                {userData?.email}
               </div>
             </div>
 
             <div className={styles.userInfo}>
-              <h1 className={styles.userName}>Pranav Sinha</h1>
-              <p className={styles.userTitle}>
-                Full Stack Developer & Competitive Programmer
-              </p>
+              <div
+                style={{
+                  flexDirection: "row",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <h1 className={styles.userName}>{userData?.username}</h1>
+                <GradientButton
+                  onClick={() => {
+                    setIsModalOpen(true);
+                  }}
+                >
+                  <div style={{display: 'flex', alignItems: 'center'}}>
+                    <FaPen />
+                    <h3>&nbsp;Edit Profile</h3>
+                  </div>
+                </GradientButton>
+              </div>
+              <p className={styles.userTitle}>{userData?.role || "No role specified. Click 'Edit Profile' to add one!"}</p>
 
               <div className={styles.badgesContainer}>
-                <h3 className={styles.badgesTitle}>Achievements & Badges</h3>
-                <div className={styles.badgesPlaceholder}>
-                  Badges will be displayed here
+                <h3 className={styles.badgesTitle}>
+                  <span className={styles.badgesTitleIcon}>🏆</span>
+                  Achievement Badges
+                </h3>
+                <div className={styles.badgesContent}>
+                  {userData?.badges?.length ? (
+                    <div className={styles.badgesList}>
+                      {getBadgesToDisplay(userData.badges).map(
+                        (badge: string, index: number) => {
+                          const badgeInfo = getBadgeInfo(badge);
+                          const isEarned = isBadgeEarned(
+                            badge,
+                            userData.badges
+                          );
+                          return (
+                            <div
+                              key={badge}
+                              className={`${styles.badgeItem} ${
+                                styles[`badge${badge}`]
+                              } ${
+                                isEarned
+                                  ? styles.badgeEarned
+                                  : styles.badgeNotEarned
+                              }`}
+                              style={
+                                {
+                                  "--badge-color": badgeInfo.color,
+                                  "--badge-glow": badgeInfo.glowColor,
+                                  "--animation-delay": `${index * 0.2}s`,
+                                } as React.CSSProperties
+                              }
+                            >
+                              <div className={styles.badgeImageContainer}>
+                                <img
+                                  src={`/T${badge.replace(/^T/, "")}.png`}
+                                  alt={`${badgeInfo.name} Badge`}
+                                  className={styles.badgeImage}
+                                />
+                                <div className={styles.badgeGlow}></div>
+                                {!isEarned && (
+                                  <div className={styles.badgeLock}>🔒</div>
+                                )}
+                              </div>
+                              <div className={styles.badgeInfo}>
+                                <span className={styles.badgeName}>
+                                  {badgeInfo.name}
+                                </span>
+                                <span className={styles.badgeXP}>
+                                  {badgeInfo.xpRange}
+                                </span>
+                              </div>
+                              <div className={styles.badgeRarity}>{badge}</div>
+                              {isEarned && (
+                                <div className={styles.badgeEarnedIndicator}>
+                                  ✓
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  ) : (
+                    <div className={styles.noBadgesContainer}>
+                      <div className={styles.noBadgesIcon}>🎯</div>
+                      <span className={styles.noBadgesText}>
+                        No badges earned yet
+                      </span>
+                      <span className={styles.noBadgesSubtext}>
+                        Complete challenges to unlock achievements!
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className={styles.userBio}>
                 <p>
-                  Passionate software developer with 5+ years of experience in
-                  building scalable web applications. I love solving complex
-                  algorithmic problems and participating in competitive
-                  programming contests. Always eager to learn new technologies
-                  and contribute to open-source projects.
+                  {userData?.bio || "No bio provided yet. Click 'Edit Profile' to add one!"}
                 </p>
               </div>
             </div>
@@ -162,24 +381,20 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            {/* Tech Stack */}
             <div className={`${styles.glassCard} ${styles.fullWidthCard}`}>
               <h3 className={styles.cardTitle}>
                 Programming Languages & Tech Stack
               </h3>
               <div className={styles.techStack}>
-                <div className={styles.techTag}>JavaScript</div>
-                <div className={styles.techTag}>Python</div>
-                <div className={styles.techTag}>Java</div>
-                <div className={styles.techTag}>C++</div>
-                <div className={styles.techTag}>React</div>
-                <div className={styles.techTag}>Node.js</div>
-                <div className={styles.techTag}>MongoDB</div>
-                <div className={styles.techTag}>PostgreSQL</div>
-                <div className={styles.techTag}>Docker</div>
-                <div className={styles.techTag}>AWS</div>
-                <div className={styles.techTag}>Git</div>
-                <div className={styles.techTag}>TypeScript</div>
+                {userData?.tech_stack && userData.tech_stack.length > 0 ? (
+                  userData.tech_stack.map((tech: string, idx: number) => (
+                    <div className={styles.techTag} key={idx}>
+                      {tech}
+                    </div>
+                  ))
+                ) : (
+                  <span style={{ color: "#aaa" }}>No tech stack specified</span>
+                )}
               </div>
             </div>
           </div>

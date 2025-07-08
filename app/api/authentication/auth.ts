@@ -8,7 +8,7 @@ export interface User {
     id: number;
     username: string;
     email: string;
-    profile_picture: string;
+    profile_picture?: string;
 }
 
 export interface LoginResponse {
@@ -90,6 +90,7 @@ export const removeAuthToken = (): void => {
     if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user_data');
+        localStorage.removeItem('user_profile_data');
     }
 };
 
