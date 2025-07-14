@@ -56,7 +56,7 @@ export default function ProblemPage() {
   const [activeTab, setActiveTab] = useState<"practice" | "company">("practice");
   const [problems, setProblems] = useState<Problem[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [solvedProblems, setSolvedProblems] = useState<SolvedProblem[]>([]); // Changed to SolvedProblem[]
+  const [solvedProblems, setSolvedProblems] = useState<SolvedProblem[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,7 +113,7 @@ export default function ProblemPage() {
       console.log("Solved problems API response:", response);
 
       if (response.success) {
-        setSolvedProblems(response.data.solvedProblems); // Now stores full SolvedProblem objects
+        setSolvedProblems(response.data.solvedProblems); 
         console.log("Solved problems loaded successfully:", response.data.solvedProblems);
       } else {
         console.error("Failed to load solved problems:", response);
