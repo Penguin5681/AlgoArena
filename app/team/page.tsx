@@ -40,7 +40,6 @@ export default function TeamPage() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState("");
 
-  // Chat state
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -48,7 +47,6 @@ export default function TeamPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Refs
   const socketRef = useRef<Socket | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,8 +61,18 @@ export default function TeamPage() {
     if (isAuthenticated) {
       fetchTeamInfo();
     }
+
+    // NOTE: Socket Cleanup
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        console.warn("The socket has been disconnected because the component has been unmounted");
+      }
+    };
   }, [isAuthenticated]);
 
+  // NOTE: This useEffect block is problematic code 70::80
+  /* 
   useEffect(() => {
     if (isAuthenticated && team?.id) {
       initializeSocket();
@@ -76,6 +84,7 @@ export default function TeamPage() {
       }
     };
   }, [isAuthenticated, team?.id]);
+  */
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -89,10 +98,10 @@ export default function TeamPage() {
     }
   }, [chatOpen]);
 
-  const initializeSocket = async () => {
+  const initializeSocket = async (teamId: number | undefined) => {
     try {
       const token = getAuthToken();
-      if (!token || !team?.id) return;
+      if (!token || !teamId) return;
 
       socketRef.current = io("http://localhost:5001", {
         auth: {
@@ -105,7 +114,7 @@ export default function TeamPage() {
       socket.on("connect", () => {
         console.log("Connected to chat server");
         setIsConnected(true);
-        socket.emit("joinTeam", team.id);
+        socket.emit("joinTeam", teamId);
       });
 
       socket.on("disconnect", () => {
@@ -155,19 +164,19 @@ export default function TeamPage() {
         setError(error.message);
       });
 
-      await loadChatHistory();
+      await loadChatHistory(teamId);
     } catch (err) {
       console.error("Failed to initialize socket:", err);
     }
   };
 
-  const loadChatHistory = async () => {
+  const loadChatHistory = async (teamId: number | undefined) => {
     try {
       const token = getAuthToken();
-      if (!token || !team?.id) return;
+      if (!token || !teamId) return;
 
       const response = await fetch(
-        `http://localhost:5001/api/team-chat/${team.id}/messages?limit=50`,
+        `http://localhost:5001/api/team-chat/${teamId}/messages?limit=50`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -175,9 +184,11 @@ export default function TeamPage() {
         }
       );
 
+      console.log(response);
+
       if (response.ok) {
         const data = await response.json();
-        setChatMessages(data.messages || []);
+        setChatMessages(data.data.messages || []);
       }
     } catch (err) {
       console.error("Failed to load chat history:", err);
@@ -189,7 +200,6 @@ export default function TeamPage() {
     if (!chatMessage.trim() || !socketRef.current || !team?.id) return;
 
     try {
-      // Send message via socket
       socketRef.current.emit("sendTeamMessage", {
         teamId: team.id,
         content: chatMessage.trim(),
@@ -197,7 +207,6 @@ export default function TeamPage() {
 
       setChatMessage("");
 
-      // Stop typing indicator
       socketRef.current.emit("typing", {
         teamId: team.id,
         isTyping: false,
@@ -211,18 +220,15 @@ export default function TeamPage() {
   const handleTyping = () => {
     if (!socketRef.current || !team?.id) return;
 
-    // Send typing indicator
     socketRef.current.emit("typing", {
       teamId: team.id,
       isTyping: true,
     });
 
-    // Clear existing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Set timeout to stop typing indicator
     typingTimeoutRef.current = setTimeout(() => {
       if (socketRef.current && team?.id) {
         socketRef.current.emit("typing", {
@@ -241,13 +247,21 @@ export default function TeamPage() {
     return currentUserMember?.is_admin || false;
   };
 
+  // NOTE: This code has been changed for the good. ref L:70
   const fetchTeamInfo = async () => {
     try {
       setLoadingTeam(true);
       const teamData = await getCurrentTeam();
       setTeam(teamData);
 
-      if (!teamData) {
+      // if (!teamData) {
+      //   router.push("/dashboard");
+      // }
+
+      // NOTE: Now the socket would be initialzed after the team is confirmed
+      if (teamData) {
+        initializeSocket(teamData.id);
+      } else {
         router.push("/dashboard");
       }
     } catch (err) {
