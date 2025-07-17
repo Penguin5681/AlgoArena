@@ -47,6 +47,7 @@ import {
 import { CheckCircle, XCircle, Clock, Activity } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { recordUserActivity } from "@/app/api/user/user";
 
 type TopicStatus = "completed" | "ongoing" | "not_started";
 
@@ -276,6 +277,7 @@ const CodingChallenge = ({
   };
 
   const handleMarkAsSolved = async () => {
+    await recordUserActivity();
     if (isSolved) return;
     stop();
     const token = getAuthToken();
@@ -510,9 +512,13 @@ const MCQChallenge = ({ mcq }: { mcq: MCQ }) => {
   const [isAnswered, setIsAnswered] = useState(false);
   const isCorrect = selectedOption === mcq.correctAnswerIndex;
 
-  const handleCheckAnswer = () => {
+  const handleCheckAnswer = async () => {
     if (selectedOption !== null) {
       setIsAnswered(true);
+    }
+
+    if (selectedOption === mcq.correctAnswerIndex) {
+      await recordUserActivity();
     }
   };
 
@@ -899,7 +905,6 @@ export default function LearnPage() {
       setUserXP(xpData.total_xp);
       setUserProgress(progressData);
 
-      // Now, combine summary with progress data
       const questionProgressMap = new Map(
         progressData.question_progress.map(p => [p.question_id, p])
       );

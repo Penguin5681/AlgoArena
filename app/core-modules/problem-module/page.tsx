@@ -120,7 +120,6 @@ export default function ProblemPage() {
       }
     } catch (error) {
       console.error("Error loading solved problems:", error);
-      // Don't throw error here as it's not critical for the page to work
     } finally {
       setSolvedLoading(false);
     }
@@ -218,12 +217,10 @@ export default function ProblemPage() {
     setSelectedCompany(companyId);
   };
 
-  // Helper function to check if a problem is solved
   const isProblemSolved = (problemId: string) => {
     return solvedProblemIds.has(problemId);
   };
 
-  // Helper function to get solved problem details
   const getSolvedProblemDetails = (problemId: string) => {
     return solvedProblems.find(solved => solved.problem_id === problemId);
   };
@@ -233,7 +230,6 @@ export default function ProblemPage() {
       <Header userXP={userXp} />
 
       <div className={styles.container}>
-        {/* Header Section */}
         <div className={styles.headerSection}>
           <div className={styles.titleSection}>
             <h1 className={styles.pageTitle}>Coding Problems</h1>

@@ -31,6 +31,7 @@ import {
 } from "react-icons/fa";
 import { fetchUserXP } from "@/app/api/learn/learn";
 import { getUserData } from "@/app/api/authentication/auth";
+import { recordUserActivity } from "@/app/api/user/user";
 
 const languageTemplates = {
   cpp: `#include <iostream>
@@ -153,6 +154,7 @@ export default function ProblemPage() {
     setCode(languageTemplates[language as keyof typeof languageTemplates]);
   };
 
+  // NOTE: This is an problematic function, and it is not very stable.
   const pollSubmissionStatus = (submissionId: number) => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
@@ -171,7 +173,7 @@ export default function ProblemPage() {
             result.data.testsPassed === result.data.totalTests
           ) {
             setShowSuccessModal(true);
-
+            await recordUserActivity();
             if (params.id) {
               loadProblemSolvedStatus(params.id as string);
             }
@@ -184,7 +186,7 @@ export default function ProblemPage() {
         );
         setIsRunning(false);
       }
-    }, 500);
+    }, 7000);
   };
 
   const handleSubmitCode = async () => {
@@ -386,7 +388,6 @@ export default function ProblemPage() {
               </div>
             </div>
 
-            {/* Solved Status Card */}
             {solvedStatus?.isSolved && solvedStatus.solvedDetails && (
               <div className={styles.solvedStatusCard}>
                 <div className={styles.solvedStatusHeader}>
