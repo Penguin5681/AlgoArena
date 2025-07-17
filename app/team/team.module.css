@@ -679,6 +679,100 @@
   opacity: 1;
 }
 
+.connectionStatus {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.connectionStatus.connected {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.connectionStatus.disconnected {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.connectionIndicator {
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+
+.connectionIndicator.connected {
+  color: #22c55e;
+}
+
+.connectionIndicator.disconnected {
+  color: #ef4444;
+}
+
+.emptyChatState {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.dateSeperator {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 1rem 0 0.5rem 0;
+  padding: 0.25rem 0.5rem;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 12px;
+  display: inline-block;
+  width: 100%;
+}
+
+.senderInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.senderAvatar {
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+}
+
+.senderAvatarDefault {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.ownMessage {
+  background: rgba(102, 126, 234, 0.1) !important;
+  border-left: 3px solid #667eea;
+}
+
+.ownMessage .messageSender {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.chatSendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chatInput:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .teamHeader {
     flex-direction: column;

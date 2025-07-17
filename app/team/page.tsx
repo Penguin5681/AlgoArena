@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "@/app/components/header/base/Header";
 import styles from "./team.module.css";
 import {
@@ -13,8 +13,24 @@ import {
   deleteTeam,
   TeamInfo,
 } from "@/app/api/teams/manage-team";
+import { getAuthToken } from "@/app/api/authentication/auth";
 import Image from "next/image";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+
+interface ChatMessage {
+  id: number;
+  content: string;
+  sender_id: number;
+  sender_username: string;
+  sender_profile_picture?: string;
+  created_at: string;
+  team_id: number;
+}
+
+interface TypingUser {
+  userId: number;
+  username: string;
+}
 
 export default function TeamPage() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
@@ -24,20 +40,18 @@ export default function TeamPage() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState("");
 
+  // Chat state
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: 1,
-      sender: "System",
-      message: "Welcome to team chat!",
-      timestamp: new Date(),
-      isSystem: true,
-    },
-  ]);
-  const [isTyping, setIsTyping] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const socket = io("http://localhost:5001");
+  // Refs
+  const socketRef = useRef<Socket | null>(null);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -50,6 +64,174 @@ export default function TeamPage() {
       fetchTeamInfo();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && team?.id) {
+      initializeSocket();
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [isAuthenticated, team?.id]);
+
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight + 20;
+    }
+  }, [chatMessages]);
+
+  useEffect(() => {
+    if (chatOpen) {
+      setUnreadCount(0);
+    }
+  }, [chatOpen]);
+
+  const initializeSocket = async () => {
+    try {
+      const token = getAuthToken();
+      if (!token || !team?.id) return;
+
+      socketRef.current = io("http://localhost:5001", {
+        auth: {
+          token: token,
+        },
+      });
+
+      const socket = socketRef.current;
+
+      socket.on("connect", () => {
+        console.log("Connected to chat server");
+        setIsConnected(true);
+        socket.emit("joinTeam", team.id);
+      });
+
+      socket.on("disconnect", () => {
+        console.log("Disconnected from chat server");
+        setIsConnected(false);
+      });
+
+      socket.on("newTeamMessage", (message: ChatMessage) => {
+        setChatMessages((prev) => [...prev, message]);
+
+        if (!chatOpen) {
+          setUnreadCount((prev) => prev + 1);
+        }
+      });
+
+      socket.on("userJoined", (data: { username: string }) => {
+        console.log(`${data.username} joined the team`);
+      });
+
+      socket.on("userLeft", (data: { username: string }) => {
+        console.log(`${data.username} left the team`);
+      });
+
+      socket.on(
+        "userTyping",
+        (data: { userId: number; username: string; isTyping: boolean }) => {
+          if (data.userId === user?.id) return;
+
+          setTypingUsers((prev) => {
+            if (data.isTyping) {
+              if (!prev.find((u) => u.userId === data.userId)) {
+                return [
+                  ...prev,
+                  { userId: data.userId, username: data.username },
+                ];
+              }
+              return prev;
+            } else {
+              return prev.filter((u) => u.userId !== data.userId);
+            }
+          });
+        }
+      );
+
+      socket.on("error", (error: { message: string }) => {
+        console.error("Socket error:", error.message);
+        setError(error.message);
+      });
+
+      await loadChatHistory();
+    } catch (err) {
+      console.error("Failed to initialize socket:", err);
+    }
+  };
+
+  const loadChatHistory = async () => {
+    try {
+      const token = getAuthToken();
+      if (!token || !team?.id) return;
+
+      const response = await fetch(
+        `http://localhost:5001/api/team-chat/${team.id}/messages?limit=50`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setChatMessages(data.messages || []);
+      }
+    } catch (err) {
+      console.error("Failed to load chat history:", err);
+    }
+  };
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatMessage.trim() || !socketRef.current || !team?.id) return;
+
+    try {
+      // Send message via socket
+      socketRef.current.emit("sendTeamMessage", {
+        teamId: team.id,
+        content: chatMessage.trim(),
+      });
+
+      setChatMessage("");
+
+      // Stop typing indicator
+      socketRef.current.emit("typing", {
+        teamId: team.id,
+        isTyping: false,
+      });
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      setError("Failed to send message");
+    }
+  };
+
+  const handleTyping = () => {
+    if (!socketRef.current || !team?.id) return;
+
+    // Send typing indicator
+    socketRef.current.emit("typing", {
+      teamId: team.id,
+      isTyping: true,
+    });
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      if (socketRef.current && team?.id) {
+        socketRef.current.emit("typing", {
+          teamId: team.id,
+          isTyping: false,
+        });
+      }
+    }, 3000);
+  };
 
   const isCurrentUserAdmin = () => {
     if (!team || !user) return false;
@@ -64,13 +246,6 @@ export default function TeamPage() {
       setLoadingTeam(true);
       const teamData = await getCurrentTeam();
       setTeam(teamData);
-      console.log("Team data:", teamData);
-      console.log("Members:", teamData?.members);
-      console.log("Current user:", user);
-      console.log(
-        "Is current user admin?",
-        teamData?.members.find((m) => m.email === user?.email)?.is_admin
-      );
 
       if (!teamData) {
         router.push("/dashboard");
@@ -136,16 +311,12 @@ export default function TeamPage() {
     try {
       setActionLoading(`promote-${memberEmail}`);
       const response = await promoteToAdmin({ targetUserEmail: memberEmail });
-      console.log("Promotion successful:", response);
-
       alert(`${username} has been promoted to admin successfully!`);
-
       await fetchTeamInfo();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to promote user";
       setError(errorMessage);
-      console.error("Promotion error:", err);
     } finally {
       setActionLoading("");
     }
@@ -159,16 +330,12 @@ export default function TeamPage() {
     try {
       setActionLoading(`demote-${memberEmail}`);
       const response = await demoteAdmin({ targetUserEmail: memberEmail });
-      console.log("Demotion successful:", response);
-
       alert(`${username} has been demoted from admin successfully!`);
-
       await fetchTeamInfo();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to demote user";
       setError(errorMessage);
-      console.error("Demotion error:", err);
     } finally {
       setActionLoading("");
     }
@@ -181,50 +348,24 @@ export default function TeamPage() {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatMessage.trim()) return;
-
-    const newMessage = {
-      id: chatMessages.length + 1,
-      sender: user?.username || "You",
-      message: chatMessage.trim(),
-      timestamp: new Date(),
-      isSystem: false,
-    };
-
-    setChatMessages((prev) => [...prev, newMessage]);
-    setChatMessage("");
-
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const responses = [
-        "That's interesting!",
-        "I agree with that.",
-        "Let me think about that...",
-        "Good point!",
-        "Thanks for sharing that.",
-        "I'll look into that.",
-      ];
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          sender: "Team Bot",
-          message: randomResponse,
-          timestamp: new Date(),
-          isSystem: false,
-        },
-      ]);
-    }, 1500);
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString();
+    }
   };
 
   if (isLoading || loadingTeam) {
@@ -284,6 +425,13 @@ export default function TeamPage() {
               {currentUserIsAdmin && (
                 <span className={styles.adminBadge}>Admin</span>
               )}
+              <span
+                className={`${styles.connectionStatus} ${
+                  isConnected ? styles.connected : styles.disconnected
+                }`}
+              >
+                {isConnected ? "🟢 Online" : "🔴 Offline"}
+              </span>
             </div>
           </div>
 
@@ -336,11 +484,9 @@ export default function TeamPage() {
                     <span className={styles.adminLabel}>Admin</span>
                   )}
 
-                  {/* Show admin action buttons only if current user is admin and not acting on themselves */}
                   {currentUserIsAdmin && member.email !== user?.email && (
                     <div className={styles.adminButtons}>
                       {!member.is_admin ? (
-                        // Show promote button for non-admin members
                         <button
                           className={styles.promoteButton}
                           onClick={() =>
@@ -353,7 +499,6 @@ export default function TeamPage() {
                             : "Promote"}
                         </button>
                       ) : (
-                        // Show demote button for admin members
                         <button
                           className={styles.demoteButton}
                           onClick={() =>
@@ -395,8 +540,8 @@ export default function TeamPage() {
         </div>
       </main>
 
+      {/* Real-time Chat */}
       <div className={styles.floatingChat}>
-        {/* Chat Window */}
         <div
           className={`${styles.chatWindow} ${chatOpen ? styles.chatOpen : ""}`}
         >
@@ -404,6 +549,13 @@ export default function TeamPage() {
             <div className={styles.chatTitle}>
               <div className={styles.chatIcon}>💬</div>
               <span>Team Chat</span>
+              <span
+                className={`${styles.connectionIndicator} ${
+                  isConnected ? styles.connected : styles.disconnected
+                }`}
+              >
+                {isConnected ? "●" : "●"}
+              </span>
             </div>
             <button
               className={styles.chatCloseButton}
@@ -413,32 +565,73 @@ export default function TeamPage() {
             </button>
           </div>
 
-          <div className={styles.chatMessages}>
-            {chatMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`${styles.chatMessage} ${
-                  msg.isSystem ? styles.systemMessage : ""
-                }`}
-              >
-                <div className={styles.messageHeader}>
-                  <span className={styles.messageSender}>{msg.sender}</span>
-                  <span className={styles.messageTime}>
-                    {formatTime(msg.timestamp)}
-                  </span>
-                </div>
-                <div className={styles.messageContent}>{msg.message}</div>
+          <div className={styles.chatMessages} ref={chatMessagesRef}>
+            {chatMessages.length === 0 ? (
+              <div className={styles.emptyChatState}>
+                <p>No messages yet. Start the conversation!</p>
               </div>
-            ))}
+            ) : (
+              chatMessages.map((msg, index) => {
+                const showDate =
+                  index === 0 ||
+                  formatDate(msg.created_at) !==
+                    formatDate(chatMessages[index - 1].created_at);
 
-            {isTyping && (
+                return (
+                  <div key={msg.id}>
+                    {showDate && (
+                      <div className={styles.dateSeperator}>
+                        {formatDate(msg.created_at)}
+                      </div>
+                    )}
+                    <div
+                      className={`${styles.chatMessage} ${
+                        msg.sender_id === user?.id ? styles.ownMessage : ""
+                      }`}
+                    >
+                      <div className={styles.messageHeader}>
+                        <div className={styles.senderInfo}>
+                          {msg.sender_profile_picture ? (
+                            <Image
+                              src={msg.sender_profile_picture}
+                              alt={msg.sender_username}
+                              width={20}
+                              height={20}
+                              className={styles.senderAvatar}
+                              unoptimized={true}
+                            />
+                          ) : (
+                            <div className={styles.senderAvatarDefault}>
+                              {msg.sender_username.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className={styles.messageSender}>
+                            {msg.sender_username}
+                          </span>
+                        </div>
+                        <span className={styles.messageTime}>
+                          {formatTime(msg.created_at)}
+                        </span>
+                      </div>
+                      <div className={styles.messageContent}>{msg.content}</div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {typingUsers.length > 0 && (
               <div className={styles.typingIndicator}>
                 <div className={styles.typingDots}>
                   <span></span>
                   <span></span>
                   <span></span>
                 </div>
-                <span>Team Bot is typing...</span>
+                <span>
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0].username} is typing...`
+                    : `${typingUsers.length} people are typing...`}
+                </span>
               </div>
             )}
           </div>
@@ -447,11 +640,19 @@ export default function TeamPage() {
             <input
               type="text"
               value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              placeholder="Type a message..."
+              onChange={(e) => {
+                setChatMessage(e.target.value);
+                handleTyping();
+              }}
+              placeholder={isConnected ? "Type a message..." : "Connecting..."}
               className={styles.chatInput}
+              disabled={!isConnected}
             />
-            <button type="submit" className={styles.chatSendButton}>
+            <button
+              type="submit"
+              className={styles.chatSendButton}
+              disabled={!isConnected || !chatMessage.trim()}
+            >
               <svg
                 viewBox="0 0 24 24"
                 width="18"
@@ -464,7 +665,6 @@ export default function TeamPage() {
           </form>
         </div>
 
-        {/* Chat Toggle Button */}
         <button
           className={`${styles.chatToggle} ${
             chatOpen ? styles.chatToggleOpen : ""
@@ -482,10 +682,11 @@ export default function TeamPage() {
           )}
         </button>
 
-        {/* Notification Badge */}
-        <div className={styles.chatNotification}>
-          <span>2</span>
-        </div>
+        {unreadCount > 0 && (
+          <div className={styles.chatNotification}>
+            <span>{unreadCount > 99 ? "99+" : unreadCount}</span>
+          </div>
+        )}
       </div>
     </div>
   );
