@@ -237,6 +237,26 @@
   box-shadow: none;
 }
 
+.cropperContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.cropperContainer .ReactCrop__image {
+  max-height: 400px;
+}
+
+.cropperActions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
 @media (max-width: 600px) {
   .modalContent {
     padding: 0;
