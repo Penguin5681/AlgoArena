@@ -44,8 +44,9 @@ export default function Header({ onLogout, userXP }: HeaderProps) {
     console.log(teamData?.name);
     if (teamData) {
       setUserTeam(teamData.name);
+    } else {
+      console.warn("TEAM NOT FOUND");
     }
-    console.warn("TEAM NOT FOUND");
   };
 
   const loadUserData = async () => {
