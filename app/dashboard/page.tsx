@@ -65,7 +65,7 @@ export default function DashboardScreen() {
           <h2>Recent Activity</h2>
           <div className={styles.emptyState}>
             <p>You haven't solved any problems yet. Start your journey by tackling your first challenge!</p>
-            <button className={styles.actionButton}>Browse Problems</button>
+            <button onClick={() => {router.push('/core-modules/problem-module')}} className={styles.actionButton}>Browse Problems</button>
           </div>
         </div>
       </main>
