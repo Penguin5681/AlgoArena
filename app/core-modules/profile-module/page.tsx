@@ -9,6 +9,15 @@ import { fetchUserXP } from "@/app/api/learn/learn";
 import { useAuth } from "@/app/context/AuthContext";
 import GradientButton from "@/app/components/buttons/base/GradientButton";
 import EditProfileModal from "@/app/components/modal/base/EditProfileModal";
+import {
+  DifficultyBreakdown,
+  getSolvedProblems,
+  SolvedProblemsResponse,
+} from "@/app/api/problems/problems";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const getBadgeInfo = (badge: string) => {
   const tier = badge.replace(/^T/, "");
@@ -86,6 +95,7 @@ const isBadgeEarned = (badge: string, userBadges: string[]) => {
 const ProfilePage = () => {
   const { user, logout } = useAuth();
   const [userXp, setUserXp] = useState(0);
+  const [userProblemData, setUserProblemData] = useState<DifficultyBreakdown>();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadUserXpData = async () => {
@@ -93,9 +103,15 @@ const ProfilePage = () => {
     setUserXp(userXp.total_xp);
   };
 
+  const loadUserProblemData = async () => {
+    const data = await getSolvedProblems();
+    setUserProblemData(data.data.difficultyBreakdown);
+  };
+
   useEffect(() => {
     loadUserXpData();
-  });
+    loadUserProblemData();
+  }, []);
 
   const generateHeatmapData = () => {
     const data = [];
@@ -135,6 +151,66 @@ const ProfilePage = () => {
     getUserData();
     loadUserData();
   }, []);
+
+
+  const totalProblems = (userProblemData?.easy || 0) + (userProblemData?.medium || 0) + (userProblemData?.hard || 0);
+
+  // Chart data configuration
+  const chartData = {
+    labels: ['Easy', 'Medium', 'Hard'],
+    datasets: [
+      {
+        data: [
+          userProblemData?.easy || 0,
+          userProblemData?.medium || 0,
+          userProblemData?.hard || 0,
+        ],
+        backgroundColor: [
+          '#10b981', // Easy - Green
+          '#f59e0b', // Medium - Orange
+          '#ef4444', // Hard - Red
+        ],
+        borderColor: [
+          '#059669',
+          '#d97706',
+          '#dc2626',
+        ],
+        borderWidth: 2,
+        hoverOffset: 4,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false, // We'll use custom legend
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleColor: '#e0e0e0',
+        bodyColor: '#e0e0e0',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderWidth: 1,
+        callbacks: {
+          label: function(context: any) {
+            const label = context.label || '';
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    },
+    elements: {
+      arc: {
+        borderWidth: 2,
+      }
+    }
+  };
 
   return (
     <>
@@ -201,13 +277,16 @@ const ProfilePage = () => {
                     setIsModalOpen(true);
                   }}
                 >
-                  <div style={{display: 'flex', alignItems: 'center'}}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
                     <FaPen />
                     <h3>&nbsp;Edit Profile</h3>
                   </div>
                 </GradientButton>
               </div>
-              <p className={styles.userTitle}>{userData?.role || "No role specified. Click 'Edit Profile' to add one!"}</p>
+              <p className={styles.userTitle}>
+                {userData?.role ||
+                  "No role specified. Click 'Edit Profile' to add one!"}
+              </p>
 
               <div className={styles.badgesContainer}>
                 <h3 className={styles.badgesTitle}>
@@ -288,7 +367,8 @@ const ProfilePage = () => {
 
               <div className={styles.userBio}>
                 <p>
-                  {userData?.bio || "No bio provided yet. Click 'Edit Profile' to add one!"}
+                  {userData?.bio ||
+                    "No bio provided yet. Click 'Edit Profile' to add one!"}
                 </p>
               </div>
             </div>
@@ -353,30 +433,40 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            {/* Problems Solved */}
             <div className={styles.glassCard}>
               <h3 className={styles.cardTitle}>Problems Solved</h3>
               <div className={styles.problemsChart}>
-                <div className={styles.pieChart}></div>
+                <div className={styles.pieChartContainer}>
+                  {totalProblems > 0 ? (
+                    <Pie data={chartData} options={chartOptions} />
+                  ) : (
+                    <div className={styles.noProblemsSolved}>
+                      <div className={styles.noProblemsSolvedIcon}>📊</div>
+                      <span>No problems solved yet</span>
+                    </div>
+                  )}
+                </div>
                 <div className={styles.problemsLegend}>
                   <div className={styles.legendItem}>
                     <div className={`${styles.legendDot} ${styles.easy}`}></div>
-                    <span>Easy: 245</span>
+                    <span>Easy: {userProblemData?.easy || 0}</span>
                   </div>
                   <div className={styles.legendItem}>
                     <div
                       className={`${styles.legendDot} ${styles.medium}`}
                     ></div>
-                    <span>Medium: 156</span>
+                    <span>Medium: {userProblemData?.medium || 0}</span>
                   </div>
                   <div className={styles.legendItem}>
                     <div className={`${styles.legendDot} ${styles.hard}`}></div>
-                    <span>Hard: 89</span>
+                    <span>Hard: {userProblemData?.hard || 0}</span>
                   </div>
                 </div>
               </div>
               <div style={{ textAlign: "center", marginTop: "20px" }}>
-                <div className={styles.rankNumber}>490</div>
+                <div className={styles.rankNumber}>
+                  {totalProblems}
+                </div>
                 <div className={styles.rankLabel}>Total Problems</div>
               </div>
             </div>
