@@ -71,7 +71,7 @@ export default function TeamPage() {
     };
   }, [isAuthenticated]);
 
-  // NOTE: This useEffect block is problematic code 70::80
+  // NOTE: This useEffect block is problematic (Bad Code)
   /* 
   useEffect(() => {
     if (isAuthenticated && team?.id) {
@@ -99,9 +99,17 @@ export default function TeamPage() {
   }, [chatOpen]);
 
   const initializeSocket = async (teamId: number | undefined) => {
+    if (socketRef.current?.connected) {
+      return;
+    }
+
     try {
       const token = getAuthToken();
       if (!token || !teamId) return;
+
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
 
       socketRef.current = io("http://localhost:5001", {
         auth: {
@@ -123,7 +131,12 @@ export default function TeamPage() {
       });
 
       socket.on("newTeamMessage", (message: ChatMessage) => {
-        setChatMessages((prev) => [...prev, message]);
+        setChatMessages((prev) => {
+          if (prev.some((msg) => msg.id === message.id)) {
+            return prev;
+          }
+          return [...prev, message];
+        });
 
         if (!chatOpen) {
           setUnreadCount((prev) => prev + 1);
