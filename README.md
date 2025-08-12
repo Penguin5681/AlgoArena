@@ -1,36 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AlgoArena
 
-## Getting Started
+**Note: This repository is strictly for experimentation and development purposes and will never go to production.**
 
-First, run the development server:
+AlgoArena is a private project, primarily written in TypeScript and CSS, designed to explore and prototype algorithms, data structure visualizations, and related interactive features. The codebase serves as a playground for front-end concepts, UI/UX enhancements, and algorithmic demonstrations.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Technologies Used
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **TypeScript**: Main language for application logic and component structure.
+- **CSS**: Styling and layout.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Backend Integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This frontend is complemented by a dedicated backend repository: [AlgoArena-Backend](https://github.com/Penguin5681/AlgoArena-Backend). The backend handles data management, API endpoints, and other server-side functionalities required by the main application.
 
-## Learn More
+## Key Points
 
-To learn more about Next.js, take a look at the following resources:
+- Private and never intended for public release or production use.
+- Experimentation-centric: Features and architecture may change frequently.
+- For backend logic and APIs, refer to [Penguin5681/AlgoArena-Backend](https://github.com/Penguin5681/AlgoArena-Backend).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+For questions or collaboration, contact [Penguin5681](https://github.com/Penguin5681).
