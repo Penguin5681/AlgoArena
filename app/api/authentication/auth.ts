@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const BASE_URL = 'http://localhost:5001';
+const BASE_URL = 'http://localhost:5000';
 
 export interface User {
     id: number;

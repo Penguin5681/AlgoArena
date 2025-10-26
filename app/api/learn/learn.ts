@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getUserData } from "../authentication/auth";
 
-const BASE_URL = 'http://localhost:5001/api/learn';
+const BASE_URL = 'http://localhost:5000/api/learn';
 
 // Corrected: Removed slug and difficulty as they are not in the summary response.
 export type TopicSummary = {

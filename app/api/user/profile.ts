@@ -1,6 +1,6 @@
 // app/api/user/profile.ts
 
-const API_BASE_URL = "http://localhost:5001/api/profile";
+const API_BASE_URL = "http://localhost:5000/api/profile";
 
 export const updateProfilePicture = async (email: string, file: File) => {
   const formData = new FormData();

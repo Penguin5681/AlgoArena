@@ -111,7 +111,7 @@ export default function TeamPage() {
         socketRef.current.disconnect();
       }
 
-      socketRef.current = io("http://localhost:5001", {
+      socketRef.current = io("http://localhost:5000", {
         auth: {
           token: token,
         },
@@ -189,7 +189,7 @@ export default function TeamPage() {
       if (!token || !teamId) return;
 
       const response = await fetch(
-        `http://localhost:5001/api/team-chat/${teamId}/messages?limit=50`,
+        `http://localhost:5000/api/team-chat/${teamId}/messages?limit=50`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

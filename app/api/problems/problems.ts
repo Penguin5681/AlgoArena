@@ -3,7 +3,7 @@ import { getAuthToken } from '../authentication/auth';
 import { useState } from 'react';
 dotenv.config();
 
-const BASE_URL = 'http://localhost:5001';
+const BASE_URL = 'http://localhost:5000';
 const CODE_EXECUTION_URL = `${BASE_URL}/api/code-execution`;
 
 export interface Problem {

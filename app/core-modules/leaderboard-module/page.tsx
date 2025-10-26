@@ -46,7 +46,7 @@ export default function LeaderboardPage() {
 
       setError(null);
 
-      const BASE_URL = "http://localhost:5001";
+      const BASE_URL = "http://localhost:5000";
 
       const offset = (page - 1) * limit;
       const response = await fetch(
@@ -107,7 +107,7 @@ export default function LeaderboardPage() {
   const fetchTeamLeaderboard = async () => {
     setTeamLoading(true);
     setTeamError(null);
-    const BASE_URL = "http://localhost:5001";
+    const BASE_URL = "http://localhost:5000";
     try {
       const res = await fetch(`${BASE_URL}/api/team/2/leaderboard`, {
         headers: {
@@ -212,7 +212,7 @@ export default function LeaderboardPage() {
     setModalOpen(true);
     setModalLoading(true);
     setModalUser(null);
-    const BASE_URL = "http://localhost:5001";
+    const BASE_URL = "http://localhost:5000";
     try {
       const res = await fetch(
         `${BASE_URL}/api/profile/get-profile/${encodeURIComponent(email)}`,

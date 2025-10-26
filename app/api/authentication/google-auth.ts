@@ -47,7 +47,7 @@ async function authenticateUserWithBackend(credential: UserCredential): Promise<
   try {
     const idToken = await credential.user.getIdToken();
 
-    const BASE_URL = 'http://localhost:5001';
+    const BASE_URL = 'http://localhost:5000';
     
     const response = await fetch(`${BASE_URL}/api/auth/firebase-login`, {
       method: 'POST',

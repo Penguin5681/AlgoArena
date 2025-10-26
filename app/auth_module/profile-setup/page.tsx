@@ -165,7 +165,7 @@ export default function ProfileSetupPage() {
       formData.append("email", email);
 
       const uploadResponse = await fetch(
-        "http://localhost:5001/api/profile/upload-profile-picture",
+        "http://localhost:5000/api/profile/upload-profile-picture",
         {
           method: "POST",
           body: formData,
