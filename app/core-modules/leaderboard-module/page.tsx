@@ -255,58 +255,6 @@ export default function LeaderboardPage() {
           </p>
         </div>
 
-        {/* Enhanced Stats Cards */}
-        <div className={styles.cardsContainer}>
-          <div className={`${styles.card} ${styles.cardUsers}`}>
-            <div className={styles.cardContent}>
-              <div className={styles.cardHeader}>
-                <h3>Total Users</h3>
-                <div className={styles.cardIcon}>👥</div>
-              </div>
-              <p className={styles.statValue}>
-                {isLoading && users.length === 0
-                  ? "..."
-                  : stats.totalUsers.toLocaleString()}
-              </p>
-              <div className={styles.statSubtext}>Active coders</div>
-            </div>
-            <div className={styles.cardGlow}></div>
-          </div>
-
-          <div
-            className={`${styles.card} ${styles.cardContests}`}
-            onClick={() => setComingSoonOpen(true)}
-            style={{ cursor: "pointer" }}
-          >
-            <div className={styles.cardContent}>
-              <div className={styles.cardHeader}>
-                <h3>Contests Conducted</h3>
-                <div className={styles.cardIcon}>🏆</div>
-              </div>
-              <p className={styles.statValue}>{stats.totalContests}</p>
-              <div className={styles.statSubtext}>Challenges completed</div>
-            </div>
-            <div className={styles.cardGlow}></div>
-          </div>
-
-          <div
-            className={`${styles.card} ${styles.cardCountdown}`}
-            onClick={() => setComingSoonOpen(true)}
-            style={{ cursor: "pointer" }}
-          >
-            <div className={styles.cardContent}>
-              <div className={styles.cardHeader}>
-                <h3>Next Contest</h3>
-                <div className={styles.cardIcon}>⏱️</div>
-              </div>
-              <p className={styles.countdown}>{formatCountdown(countdown)}</p>
-              <div className={styles.statSubtext}>Time remaining</div>
-            </div>
-            <div className={styles.cardGlow}></div>
-            <div className={styles.pulsingRing}></div>
-          </div>
-        </div>
-
         {/* Enhanced Tab Navigation */}
         <div className={styles.tabsContainer}>
           <div className={styles.tabs}>

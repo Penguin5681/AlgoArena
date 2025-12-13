@@ -10,8 +10,8 @@ const firebaseConfig = {
   projectId: "algo-arena-85b81",
   storageBucket: "algo-arena-85b81.firebasestorage.app",
   messagingSenderId: "175622746504",
-  appId: "1:175622746504:web:32260f47642e199e390a3d",
-  measurementId: "G-4RB8H726JX",
+  appId: "1:175622746504:web:204f6fc31ec43fd1390a3d",
+  measurementId: "G-M5HZPX29XJ"
 };
 
 let firebaseApp;
